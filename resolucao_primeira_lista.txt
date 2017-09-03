@@ -1,0 +1,46 @@
+1 - O neurônio é uma unidade de processamento simples, que recebe valores de terceiros, podendo atribuir pesos (ou seja, um valor de maior ou menor importância) para os valores recebidos, e após executar uma função simples em tais valores, retorna um valor resultante. O neurônio artificial tem como inspiração no neurônio biológico, pois enquanto o neurônio biológico está conectado com os outros neurônios via dendritos (para receber informações) e axônios (para emitir informações), e estão conectados formando a rede neural do cérebro humano, o neurônio artificial também recebe informações do exterior e repassa seus resultados para os próximos neurônios, além de que ambos executam apenas funções de execução simples, porém a soma do todo é capaz de executar tarefas mais complexas.
+
+2 - O bias tem como objetivo ser uma entrada constante, ou seja, um valor que está sempre presente em todas as somas da junta aditiva, além de estar sempre com o mesmo valor (+1 por padrão). o bias também apresenta consigo um peso extra na soma.
+
+3 - Dentro do plano cartesiano, o bias tem como efeito alterar a posição do limiar de decisão, sem modificar a direção desse limiar. Caso o bias for igual a zero, o desenho do limiar de decisão irá sempre passar pelo ponto [0, 0] do plano cartesiano.
+
+4 - O notebook é um ambiente computacional interativo que permite os usuários trabalharem e interagirem com ferramentas de programação, visualização de dados, imagens, equações, uso do shell do sistema, dentre outros. Com isso, eles servem para facilitarem a configuração de um ambiente e o trabalho e entendimento na programação, por facilitar não só o manuseio como também a compreensão do que está sendo trabalhado.
+
+5 - No framework Tensorflow, é utilizado um diagrama de fluxo de dados. Tal diagrama se apresenta da forma de um grafo, onde os nós representam as operações que são executadas por um algoritmo (tanto funções matemáticas como declarações de variáveis ou constantes), e as arestas representam a passagem de vetores de dados entre uma operação e a sua próxima atividade.
+
+6 - 
+
+7 - A função de ativação tem como objetivo definir qual será o output de um neurônio, dado as suas entradas e o resultado da sua junção aditiva. No caso do perceptron, o output desse tipo de neurônio é do tipo binário, haja visto que ele apresenta uma função de ativação que retorna apenas 0 ou 1, o que o permite dividir o plano cartesiano para classificar elementos de entrada em duas classes, por exemplo.
+
+8 - O peso tem como função atribuir um valor de importância a uma entrada em relação ao valor da soma total dos valores de entrada. Ou seja: o peso tem como objetivo indicar a maior ou menor importância de uma entrada entre todas as entradas que são utilizadas pela função aditiva, onde uma modificação no valor da entrada com maior importância tem um modificação maior no resultado da soma total, e vice-versa. Tal ideia de peso também é apresentada dentro de um sistema biológico, onde o peso também é uma medida de importância de uma determinada conexão entre neurônios, ou entre um neurônio e o exterior. Assim sendo, quando maior utilizada for essa conexão, maior é o peso atribuído pela rede neural, assim como a falta de utilização de uma determinada conexão faz com que o peso dela seja diminuído com o tempo.
+
+9 - 
+
+10 - Sim, pois na medida que as épocas de treinamento forem sendo treinadas, quando o algoritmo entrar em contato com uma classe onde a classificação deu errado, ocorrerá a atualização dos pesos por confronto com o erro encontrado, e aí teremos novos valores para os pesos, e assim a épocas continuam.
+
+11 - Levando em consideração que a ideia do peso é diferenciar a importância das entradas no neurônio, um treinamento que resulte em todas as entradas com o mesmo peso implica que todas elas tem a mesma importância no tratamento do problema.
+
+12 - Não, pois como o bias controla a posição do limite de decisão no plano cartesiano, sem o bias a esse limite sempre irá passar pelas coordenadas [0, 0].
+
+13 - A taxa de aprendizado serve para controlar, em números, em quanto será a evolução dos pessoas a serem utilizados pelo neurônio. Ou seja, para controlar em quanto será a adição ou subtração dos pesos após confrontamento do erro de uma classificação que deu errado, onde ao ter uma taxa de aprendizado muito alta, o algoritmo corre o risco de passar dos valores ideais e não conseguir alcançar tais valores, e com uma taxa de aprendizado muito baixa o algoritmo corre o risco de demorar excessivamente para calcular as épocas e os seus pesos.
+
+14)a) - O gradiente é um número que indica para qual direção uma função estará crescendo, ou seja, para qual "lado" do plano cartesiano uma função vai ter um resultado maior.
+
+14)b) - O gradiente é um parâmetro que define a direção de crescimento de uma função f(x) em relação a um ponto x aleatório.
+
+15 - Nem sempre que a derivada de uma função é nula, significa que a função está passando por um máximo ou um mínimo. Ao atingir um valor nulo, isso apenas significa que o ponto x dentro de uma função f(x) está em um ponto no qual a taxa de variação da função é nula.
+
+16 - Utilizando a função f(x) = x^4 - 3x^3 + 2, vamos escolher aleatoriamente o valor 2:
+
+Executando a derivada: derivada(x^4 - 3x^3 + 2) = 4x^3 - 9x^2
+Aplicando x = 2, temos: 4 * 2 ^ 3 - 9 * 2 ^ 2 = -4
+Sendo o gradiente igual a "-4", utilizaremos "4" como valor alvo da etapa de aprendizado.
+Tendo a taxa de aprendizado como 0.001, temos: 2 - 0.0001 * 4 * 2 = 1,9992
+
+Sendo assim, o próximo valor de x a ser utilizado será 1,9992
+
+17 - Enquanto o algoritmo de treinamento do perceptron utiliza o erro como diferença entre o valor previsto e o valor real de uma classificação, o algoritmo de treinamento do Adaline utiliza a função que descreve o erro para, derivando a partir de um ponto x aleatório, descobrir o ponto de erro mínimo na função.
+
+18 - Falsa, haja visto que ainda há outros parâmetros como quantidade máxima de épocas, valor mínimo do erro e também valor da taxa de aprendizado que podem influir sobre quando e onde o algoritmo de descoberta do erro será interrompido, afetando aí qual será o valor final para os pesos do neurônio.
+
+22 - O Perceptron, ao primeiro sinal de ter identificado um limite de decisão que satisfaz as classes apresentadas na base de testes, ele já automaticamente se dá por satisfeito e utiliza a primeira função encontrada que classifique os valores apresentados. Por outro lado, o Adaline busca uma função que, além de classificar corretamente as classes da sua base de teste, também apresente o menor erro quadrático médio entre as classes, ou seja, o Adaline busca o limite de decisão que apresenta a maior margem possível entre as duas classes com as quais ele está sendo treinado.
