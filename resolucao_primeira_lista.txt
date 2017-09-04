@@ -1,46 +1,52 @@
-1 - O neurÙnio È uma unidade de processamento simples, que recebe valores de terceiros, podendo atribuir pesos (ou seja, um valor de maior ou menor import‚ncia) para os valores recebidos, e apÛs executar uma funÁ„o simples em tais valores, retorna um valor resultante. O neurÙnio artificial tem como inspiraÁ„o no neurÙnio biolÛgico, pois enquanto o neurÙnio biolÛgico est· conectado com os outros neurÙnios via dendritos (para receber informaÁıes) e axÙnios (para emitir informaÁıes), e est„o conectados formando a rede neural do cÈrebro humano, o neurÙnio artificial tambÈm recebe informaÁıes do exterior e repassa seus resultados para os prÛximos neurÙnios, alÈm de que ambos executam apenas funÁıes de execuÁ„o simples, porÈm a soma do todo È capaz de executar tarefas mais complexas.
+Ôªø1 - O neur√¥nio √© uma unidade de processamento simples, que recebe valores de terceiros, podendo atribuir pesos (ou seja, um valor de maior ou menor import√¢ncia) para os valores recebidos, e ap√≥s executar uma fun√ß√£o simples em tais valores, retorna um valor resultante. O neur√¥nio artificial tem como inspira√ß√£o no neur√¥nio biol√≥gico, pois enquanto o neur√¥nio biol√≥gico est√° conectado com os outros neur√¥nios via dendritos (para receber informa√ß√µes) e ax√¥nios (para emitir informa√ß√µes), e est√£o conectados formando a rede neural do c√©rebro humano, o neur√¥nio artificial tamb√©m recebe informa√ß√µes do exterior e repassa seus resultados para os pr√≥ximos neur√¥nios, al√©m de que ambos executam apenas fun√ß√µes de execu√ß√£o simples, por√©m a soma do todo √© capaz de executar tarefas mais complexas.
 
-2 - O bias tem como objetivo ser uma entrada constante, ou seja, um valor que est· sempre presente em todas as somas da junta aditiva, alÈm de estar sempre com o mesmo valor (+1 por padr„o). o bias tambÈm apresenta consigo um peso extra na soma.
+2 - O bias tem como objetivo ser uma entrada constante, ou seja, um valor que est√° sempre presente em todas as somas da junta aditiva, al√©m de estar sempre com o mesmo valor (+1 por padr√£o). o bias tamb√©m apresenta consigo um peso extra na soma.
 
-3 - Dentro do plano cartesiano, o bias tem como efeito alterar a posiÁ„o do limiar de decis„o, sem modificar a direÁ„o desse limiar. Caso o bias for igual a zero, o desenho do limiar de decis„o ir· sempre passar pelo ponto [0, 0] do plano cartesiano.
+3 - Dentro do plano cartesiano, o bias tem como efeito alterar a posi√ß√£o do limiar de decis√£o, sem modificar a dire√ß√£o desse limiar. Caso o bias for igual a zero, o desenho do limiar de decis√£o ir√° sempre passar pelo ponto [0, 0] do plano cartesiano.
 
-4 - O notebook È um ambiente computacional interativo que permite os usu·rios trabalharem e interagirem com ferramentas de programaÁ„o, visualizaÁ„o de dados, imagens, equaÁıes, uso do shell do sistema, dentre outros. Com isso, eles servem para facilitarem a configuraÁ„o de um ambiente e o trabalho e entendimento na programaÁ„o, por facilitar n„o sÛ o manuseio como tambÈm a compreens„o do que est· sendo trabalhado.
+4 - O notebook √© um ambiente computacional interativo que permite os usu√°rios trabalharem e interagirem com ferramentas de programa√ß√£o, visualiza√ß√£o de dados, imagens, equa√ß√µes, uso do shell do sistema, dentre outros. Com isso, eles servem para facilitarem a configura√ß√£o de um ambiente e o trabalho e entendimento na programa√ß√£o, por facilitar n√£o s√≥ o manuseio como tamb√©m a compreens√£o do que est√° sendo trabalhado.
 
-5 - No framework Tensorflow, È utilizado um diagrama de fluxo de dados. Tal diagrama se apresenta da forma de um grafo, onde os nÛs representam as operaÁıes que s„o executadas por um algoritmo (tanto funÁıes matem·ticas como declaraÁıes de vari·veis ou constantes), e as arestas representam a passagem de vetores de dados entre uma operaÁ„o e a sua prÛxima atividade.
+5 - No framework Tensorflow, √© utilizado um diagrama de fluxo de dados. Tal diagrama se apresenta da forma de um grafo, onde os n√≥s representam as opera√ß√µes que s√£o executadas por um algoritmo (tanto fun√ß√µes matem√°ticas como declara√ß√µes de vari√°veis ou constantes), e as arestas representam a passagem de vetores de dados entre uma opera√ß√£o e a sua pr√≥xima atividade.
 
 6 - 
 
-7 - A funÁ„o de ativaÁ„o tem como objetivo definir qual ser· o output de um neurÙnio, dado as suas entradas e o resultado da sua junÁ„o aditiva. No caso do perceptron, o output desse tipo de neurÙnio È do tipo bin·rio, haja visto que ele apresenta uma funÁ„o de ativaÁ„o que retorna apenas 0 ou 1, o que o permite dividir o plano cartesiano para classificar elementos de entrada em duas classes, por exemplo.
+7 - A fun√ß√£o de ativa√ß√£o tem como objetivo definir qual ser√° o output de um neur√¥nio, dado as suas entradas e o resultado da sua jun√ß√£o aditiva. No caso do perceptron, o output desse tipo de neur√¥nio √© do tipo bin√°rio, haja visto que ele apresenta uma fun√ß√£o de ativa√ß√£o que retorna apenas 0 ou 1, o que o permite dividir o plano cartesiano para classificar elementos de entrada em duas classes, por exemplo.
 
-8 - O peso tem como funÁ„o atribuir um valor de import‚ncia a uma entrada em relaÁ„o ao valor da soma total dos valores de entrada. Ou seja: o peso tem como objetivo indicar a maior ou menor import‚ncia de uma entrada entre todas as entradas que s„o utilizadas pela funÁ„o aditiva, onde uma modificaÁ„o no valor da entrada com maior import‚ncia tem um modificaÁ„o maior no resultado da soma total, e vice-versa. Tal ideia de peso tambÈm È apresentada dentro de um sistema biolÛgico, onde o peso tambÈm È uma medida de import‚ncia de uma determinada conex„o entre neurÙnios, ou entre um neurÙnio e o exterior. Assim sendo, quando maior utilizada for essa conex„o, maior È o peso atribuÌdo pela rede neural, assim como a falta de utilizaÁ„o de uma determinada conex„o faz com que o peso dela seja diminuÌdo com o tempo.
+8 - O peso tem como fun√ß√£o atribuir um valor de import√¢ncia a uma entrada em rela√ß√£o ao valor da soma total dos valores de entrada. Ou seja: o peso tem como objetivo indicar a maior ou menor import√¢ncia de uma entrada entre todas as entradas que s√£o utilizadas pela fun√ß√£o aditiva, onde uma modifica√ß√£o no valor da entrada com maior import√¢ncia tem um modifica√ß√£o maior no resultado da soma total, e vice-versa. Tal ideia de peso tamb√©m √© apresentada dentro de um sistema biol√≥gico, onde o peso tamb√©m √© uma medida de import√¢ncia de uma determinada conex√£o entre neur√¥nios, ou entre um neur√¥nio e o exterior. Assim sendo, quando maior utilizada for essa conex√£o, maior √© o peso atribu√≠do pela rede neural, assim como a falta de utiliza√ß√£o de uma determinada conex√£o faz com que o peso dela seja diminu√≠do com o tempo.
 
 9 - 
 
-10 - Sim, pois na medida que as Èpocas de treinamento forem sendo treinadas, quando o algoritmo entrar em contato com uma classe onde a classificaÁ„o deu errado, ocorrer· a atualizaÁ„o dos pesos por confronto com o erro encontrado, e aÌ teremos novos valores para os pesos, e assim a Èpocas continuam.
+10 - Sim, pois na medida que as √©pocas de treinamento forem sendo treinadas, quando o algoritmo entrar em contato com uma classe onde a classifica√ß√£o deu errado, ocorrer√° a atualiza√ß√£o dos pesos por confronto com o erro encontrado, e a√≠ teremos novos valores para os pesos, e assim a √©pocas continuam.
 
-11 - Levando em consideraÁ„o que a ideia do peso È diferenciar a import‚ncia das entradas no neurÙnio, um treinamento que resulte em todas as entradas com o mesmo peso implica que todas elas tem a mesma import‚ncia no tratamento do problema.
+11 - Levando em considera√ß√£o que a ideia do peso √© diferenciar a import√¢ncia das entradas no neur√¥nio, um treinamento que resulte em todas as entradas com o mesmo peso implica que todas elas tem a mesma import√¢ncia no tratamento do problema.
 
-12 - N„o, pois como o bias controla a posiÁ„o do limite de decis„o no plano cartesiano, sem o bias a esse limite sempre ir· passar pelas coordenadas [0, 0].
+12 - N√£o, pois como o bias controla a posi√ß√£o do limite de decis√£o no plano cartesiano, sem o bias a esse limite sempre ir√° passar pelas coordenadas [0, 0].
 
-13 - A taxa de aprendizado serve para controlar, em n˙meros, em quanto ser· a evoluÁ„o dos pessoas a serem utilizados pelo neurÙnio. Ou seja, para controlar em quanto ser· a adiÁ„o ou subtraÁ„o dos pesos apÛs confrontamento do erro de uma classificaÁ„o que deu errado, onde ao ter uma taxa de aprendizado muito alta, o algoritmo corre o risco de passar dos valores ideais e n„o conseguir alcanÁar tais valores, e com uma taxa de aprendizado muito baixa o algoritmo corre o risco de demorar excessivamente para calcular as Èpocas e os seus pesos.
+13 - A taxa de aprendizado serve para controlar, em n√∫meros, em quanto ser√° a evolu√ß√£o dos pessoas a serem utilizados pelo neur√¥nio. Ou seja, para controlar em quanto ser√° a adi√ß√£o ou subtra√ß√£o dos pesos ap√≥s confrontamento do erro de uma classifica√ß√£o que deu errado, onde ao ter uma taxa de aprendizado muito alta, o algoritmo corre o risco de passar dos valores ideais e n√£o conseguir alcan√ßar tais valores, e com uma taxa de aprendizado muito baixa o algoritmo corre o risco de demorar excessivamente para calcular as √©pocas e os seus pesos.
 
-14)a) - O gradiente È um n˙mero que indica para qual direÁ„o uma funÁ„o estar· crescendo, ou seja, para qual "lado" do plano cartesiano uma funÁ„o vai ter um resultado maior.
+14)a) - O gradiente √© um n√∫mero que indica para qual dire√ß√£o uma fun√ß√£o estar√° crescendo, ou seja, para qual "lado" do plano cartesiano uma fun√ß√£o vai ter um resultado maior.
 
-14)b) - O gradiente È um par‚metro que define a direÁ„o de crescimento de uma funÁ„o f(x) em relaÁ„o a um ponto x aleatÛrio.
+14)b) - O gradiente √© um par√¢metro que define a dire√ß√£o de crescimento de uma fun√ß√£o f(x) em rela√ß√£o a um ponto x aleat√≥rio.
 
-15 - Nem sempre que a derivada de uma funÁ„o È nula, significa que a funÁ„o est· passando por um m·ximo ou um mÌnimo. Ao atingir um valor nulo, isso apenas significa que o ponto x dentro de uma funÁ„o f(x) est· em um ponto no qual a taxa de variaÁ„o da funÁ„o È nula.
+15 - Nem sempre que a derivada de uma fun√ß√£o √© nula, significa que a fun√ß√£o est√° passando por um m√°ximo ou um m√≠nimo. Ao atingir um valor nulo, isso apenas significa que o ponto x dentro de uma fun√ß√£o f(x) est√° em um ponto no qual a taxa de varia√ß√£o da fun√ß√£o √© nula.
 
-16 - Utilizando a funÁ„o f(x) = x^4 - 3x^3 + 2, vamos escolher aleatoriamente o valor 2:
+16 - Utilizando a fun√ß√£o f(x) = x^4 - 3x^3 + 2, vamos escolher aleatoriamente o valor 2:
 
 Executando a derivada: derivada(x^4 - 3x^3 + 2) = 4x^3 - 9x^2
 Aplicando x = 2, temos: 4 * 2 ^ 3 - 9 * 2 ^ 2 = -4
 Sendo o gradiente igual a "-4", utilizaremos "4" como valor alvo da etapa de aprendizado.
 Tendo a taxa de aprendizado como 0.001, temos: 2 - 0.0001 * 4 * 2 = 1,9992
 
-Sendo assim, o prÛximo valor de x a ser utilizado ser· 1,9992
+Sendo assim, o pr√≥ximo valor de x a ser utilizado ser√° 1,9992
 
-17 - Enquanto o algoritmo de treinamento do perceptron utiliza o erro como diferenÁa entre o valor previsto e o valor real de uma classificaÁ„o, o algoritmo de treinamento do Adaline utiliza a funÁ„o que descreve o erro para, derivando a partir de um ponto x aleatÛrio, descobrir o ponto de erro mÌnimo na funÁ„o.
+17 - Enquanto o algoritmo de treinamento do perceptron utiliza o erro como diferen√ßa entre o valor previsto e o valor real de uma classifica√ß√£o, o algoritmo de treinamento do Adaline utiliza a fun√ß√£o que descreve o erro para, derivando a partir de um ponto x aleat√≥rio, descobrir o ponto de erro m√≠nimo na fun√ß√£o.
 
-18 - Falsa, haja visto que ainda h· outros par‚metros como quantidade m·xima de Èpocas, valor mÌnimo do erro e tambÈm valor da taxa de aprendizado que podem influir sobre quando e onde o algoritmo de descoberta do erro ser· interrompido, afetando aÌ qual ser· o valor final para os pesos do neurÙnio.
+18 - Falsa, haja visto que ainda h√° outros par√¢metros como quantidade m√°xima de √©pocas, valor m√≠nimo do erro e tamb√©m valor da taxa de aprendizado que podem influir sobre quando e onde o algoritmo de descoberta do erro ser√° interrompido, afetando a√≠ qual ser√° o valor final para os pesos do neur√¥nio.
 
-22 - O Perceptron, ao primeiro sinal de ter identificado um limite de decis„o que satisfaz as classes apresentadas na base de testes, ele j· automaticamente se d· por satisfeito e utiliza a primeira funÁ„o encontrada que classifique os valores apresentados. Por outro lado, o Adaline busca uma funÁ„o que, alÈm de classificar corretamente as classes da sua base de teste, tambÈm apresente o menor erro quadr·tico mÈdio entre as classes, ou seja, o Adaline busca o limite de decis„o que apresenta a maior margem possÌvel entre as duas classes com as quais ele est· sendo treinado.
+19 - 
+
+20)a) - O treinamento convergiu em 4 √©pocas, com os valores (babhasidfhasf)
+20)b) - 
+20)c) - Inicializando os pesos com os valores (0, 0, 0), temos como resultado final os pesos (1, 1, -1), tendo o treinamento convergido em 4 √©pocas.
+
+22 - O Perceptron, ao primeiro sinal de ter identificado um limite de decis√£o que satisfaz as classes apresentadas na base de testes, ele j√° automaticamente se d√° por satisfeito e utiliza a primeira fun√ß√£o encontrada que classifique os valores apresentados. Por outro lado, o Adaline busca uma fun√ß√£o que, al√©m de classificar corretamente as classes da sua base de teste, tamb√©m apresente o menor erro quadr√°tico m√©dio entre as classes, ou seja, o Adaline busca o limite de decis√£o que apresenta a maior margem poss√≠vel entre as duas classes com as quais ele est√° sendo treinado.
