@@ -1,0 +1,19 @@
+1 -
+
+2 -
+
+3 -
+
+4 - O maior problema nas redes neurais de múltiplas camadas é a falta de precisão em relação as informações de soma ponderada e derivadas de erros que são propagadas pela rede de maneira progressiva e regressiva, respectivamente. Ou seja, como os cálculos em sua grande maioria resultam em dízimas, esses números são arredondados durante os cálculos, o que significa que, com o aumento horizontal ou vertical da rede neural de múltiplas camadas, teremos um resultado que é um arredondamento de um arredondamento, perdendo a precisão e a eficácia do refinamento dos pesos de acordo com o erro. Também podemos colocar como dificuldade o custo computacional de uma rede neural de múltiplas camadas, que é bem maior em relação a rede neural simples.
+
+5 - A regra da cadeia é uma afirmação que indica que se uma função A é composta pela função B, e a mesma função B é composta pela função C, então é possível partir da função A e atingir a função C, obviamente passando pela função B.
+
+6 - A regra da cadeia é uma fórmula para calcular a derivada de uma composição de duas ou mais funções.
+
+7 - As derivadas parciais são utilizadas na rede neural de múltiplas camadas para encontrarem o gradiente das funções de erro entre suas partes, como soma ponderada de um neurônio, função de ativação de um neurônio, erro total da rede neural, dentre outros. Ao se descobrir, por meio das derivadas parciais e da regra da cadeia o gradiente da derivada do erro total em relação a um determinado peso da rede neural, esse peso é ajustado em relação contrária ao gradiente encontrado, ou seja, em direção ao mínimo daquela função.
+
+8 - Não necessariamente. Dado a questão da perda de precisão no arredondamento dos resultados dos cálculos que são passados como parâmetros para outras funções, na medida que se aumenta a quantidade de camadas, ocorre uma diminuição na eficácia quanto a correção dos pesos em relação ao erro total. Ou seja, caso tenhamos uma rede neural de múltiplas camadas muito grande, teremos o problema da correção dos pesos das camadas opostas ao erro total receberam uma alteração insuficiente ao que eles realmente 
+
+deveriam receber.
+
+9 - 
