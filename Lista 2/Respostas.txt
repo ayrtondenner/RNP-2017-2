@@ -1,8 +1,8 @@
 1 -
 
-2 -
+2 - A fun??o de ativa??o tem como objetivo principal adicionar a n?o-linearidade na rede neural. Com isso, a rede neural consegue resolver problemas que uma rede neural com fun??es lineares de ativa??o n?o conseguiriam resolver. Al?m disso, caso a rede neural fosse formada por v?rios neur?nios com fun??es lineares, pela propriedade da fun??o linear ? poss?vel substituir v?rios neur?nios com fun??es de ativa??o linear por apenas UM neur?nio com fun??o de ativa??o linear, o que indica a falta de capacidade de resolu??o de problemas de neur?nios com fun??o de ativa??o linear, e tamb?m impede a separa??o de classes que n?o s?o linearmente separ?veis. Al?m disso, a fun??o de ativa??o tamb?m controla o intervalo de valores que um neur?nio pode retornar, impedindo que o acr?scimo de valores atinja um n?mero muito alto no final da rede neural, pois o resultado dos neur?nios sempre estar? dentro do intervalo da fun??o de ativa??o.
 
-3 -
+3 - Como cada neur?nio s? consegue construir apenas uma ?nica superf?cie de separa??o no plano do problema, uma rede neural m?ltipla consegue construir v?rias superf?cies de separa??o, uma superf?cie desenhada para cada neur?nio da camada oculta, de maneira que no final, a rede neural de m?ltiplas camadas adquire a habilidade de separar determinados problemas n?o-lineares, dado a jun??o das superf?cies de separa??o conseguirem separar as classes do problema.
 
 4 - O maior problema nas redes neurais de múltiplas camadas é a falta de precisão em relação as informações de soma ponderada e derivadas de erros que são propagadas pela rede de maneira progressiva e regressiva, respectivamente. Ou seja, como os cálculos em sua grande maioria resultam em dízimas, esses números são arredondados durante os cálculos, o que significa que, com o aumento horizontal ou vertical da rede neural de múltiplas camadas, teremos um resultado que é um arredondamento de um arredondamento, perdendo a precisão e a eficácia do refinamento dos pesos de acordo com o erro. Também podemos colocar como dificuldade o custo computacional de uma rede neural de múltiplas camadas, que é bem maior em relação a rede neural simples.
 
@@ -12,8 +12,10 @@
 
 7 - As derivadas parciais são utilizadas na rede neural de múltiplas camadas para encontrarem o gradiente das funções de erro entre suas partes, como soma ponderada de um neurônio, função de ativação de um neurônio, erro total da rede neural, dentre outros. Ao se descobrir, por meio das derivadas parciais e da regra da cadeia o gradiente da derivada do erro total em relação a um determinado peso da rede neural, esse peso é ajustado em relação contrária ao gradiente encontrado, ou seja, em direção ao mínimo daquela função.
 
-8 - Não necessariamente. Dado a questão da perda de precisão no arredondamento dos resultados dos cálculos que são passados como parâmetros para outras funções, na medida que se aumenta a quantidade de camadas, ocorre uma diminuição na eficácia quanto a correção dos pesos em relação ao erro total. Ou seja, caso tenhamos uma rede neural de múltiplas camadas muito grande, teremos o problema da correção dos pesos das camadas opostas ao erro total receberam uma alteração insuficiente ao que eles realmente 
-
-deveriam receber.
+8 - Não necessariamente. Dado a questão da perda de precisão no arredondamento dos resultados dos cálculos que são passados como parâmetros para outras funções, na medida que se aumenta a quantidade de camadas, ocorre uma diminuição na eficácia quanto a correção dos pesos em relação ao erro total. Ou seja, caso tenhamos uma rede neural de múltiplas camadas muito grande, teremos o problema da correção dos pesos das camadas opostas ao erro total receberam uma alteração insuficiente ao que eles realmente deveriam receber.
 
 9 - 
+
+10 - O gradiente descendente, por utilizar toda a base de dados como par?metro no c?lculo do refinamento dos pesos, situa-se inicialmente em um ponto na fun??o de erro, e a partir desse ponto evolui os refinamentos via deriva??o da fun??o. Por?m, por desenvolver a partir de um ponto em espec?fico da fun??o de erro, o gradiente descendente corre o risco de atingir um m?nimo local, haja visto que considera apenas um ponto na fun??o de erro do modelo. Por outro lado, o gradiente descendente estoc?stico tem como vantagem que, ao utilizar uma linha por vez da base dados, o gradiente estoc?stico acaba passando por v?rios pontos na fun??o de erro (ao inv?s de apenas um ponto), o que aumenta as chances de atingir um m?nimo global dentro da fun??o de erro, pois ele ir? desenvolver o refinamento dos pesos partindo de diferentes pontos na fun??o de erro do sistema. Obviamente que h? um trade-off em rela??o a utilizar o gradiente descendente estoc?stico, que se traduz em um c?lculo mais err?tico e tamb?m mais demorado em rela??o a se aproximar do alvo da fun??o de erro.
+ 
+11 - OK 
