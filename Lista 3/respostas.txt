@@ -1,0 +1,15 @@
+1) 
+ 
+2) A camada de convolu??o ? respons?vel por fazer a compara??o entre as matrizes de entrada e as matrizes que comp?em as "caracter?sticas" que esses dados de entrada podem conter. Ao final, a camada de convolu??o retorna v?rias matrizes, uma para cada matriz de caracter?stica, indicando a semelhan?a da matriz de entrada com a r
+ 
+3) A camada ReLu ? respons?vel por aplicar a fun??o ReLu em todos os valores de uma respectiva matriz. A fun??o ReLu tem por funcionamento igualar a zero todos os valores negativos em uma determinada matriz, de forma a ainda manter a n?o-linearidade em seus valores resultantes (ou seja, no resultado da fun??o ReLu ao rec
+ 
+4) Em uma rede neural artificial, ao aumentar o n?mero de camadas da rede, caso estejamos utilizando fun??es de ativa??o como a sigm?ide ou a hiperb?lica, como a derivada de cada uma delas resulta em n?meros entre 0 e 1 ou -1 e 1, a medida que o n?mero de camadas aumenta e a retropropaga??o faz com que tenhamos mais e mais multiplica??es entre n?meros menores que 1, as camadas mais profundas v?o recebendo n?meros cada vez menores e cada vez mais pr?ximos de zero. Caso atinjam zero na derivada da fun??o de ativa??o anterior, as camadas n?o v?o conseguir atualizar os seus respectivos pesos. Com a fun??o ReLu, n?o temos mais um valor m?ximo de 1 para saturar as derivadas, por?m ainda assim temos problemas ao derivar resultados negativos, pois estes sempre ser?o igual a zero, enq
+ 
+5) Na camada convolucional, a ideia de compartilhamento de pesos ? presente pois os pesos de uma matriz de caracter?sticas ? compartilhado entre v?rios valores da matriz de entrada, ou seja, diferentes valores da matriz de entrada compartilham e entram em contato com o mesmo peso em rela??o a uma mesma matriz de cara
+ 
+6) A camada de pooling age diminuindo o tamanho da matriz de entrada, ao agrupar valores semelhantes em apenas um ?nico valor na mesma matriz. Com isso, o tamanho da matriz de entrada vai gradualmente diminuindo, diminuindo tamb?m o custo computacional do total da rede convolucional, sem perder informa??es importantes do dado de entrada, pois a proximidade de valores ? pr
+ 
+7) Caso o deslize do filtro seja igual a 1, o resultado final ser? 28x28x5
+ 
+8) Uma rede convolucional apresenta como partes principais: a camada de convolu??o, a camada de pooling, e uma rede "fully-connected". A camada de convolu??o tem por fun??o gerar matrizes que s?o resultados de compara??o entre os dados de entrada e as matrizes de caracter?sticas (ou features); a camada de pooling tem por fun??o gerar uma diminui??o do tamanho das matrizes trabalhadas, por meio de agrupamento de valores semelhantes nos valores das matrizes; e a rede "fully-connected" atua como uma rede neural multi-camadas cl?ssica, trabalhando com as matrizes resultantes das outras opera??es, e conectando todos os neur?nios das suas camadas para produzir um resultado (ao contr?rio dos valores na camada convolu
