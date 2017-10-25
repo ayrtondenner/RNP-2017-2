@@ -62,6 +62,19 @@ def calcula_acuracia_teste(array_test_images, array_test_labels):
         
     return accuracy_list
 
+def exibe_imagens(array_train_images):
+    figure = plt.figure()
+
+    for i in range(6):
+        subplot = figure.add_subplot(2, 3, i + 1)
+        imagem = array_train_images[i]
+        array_imagem = np.array([imagem])
+        array_imagem = array_imagem.reshape(len(array_imagem), 3, 32, 32)
+        array_imagem = array_imagem.transpose(0, 2, 3, 1)
+        plt.imshow(array_imagem[0])
+
+    plt.show()
+
 cifar_array = cifar_array()
 
 array_train_images = []
@@ -72,6 +85,7 @@ array_test_labels = []
 for cifar_batch in cifar_array:
 
     for image in cifar_batch[b'data']:
+        image = image/255.0
         if 'training' in str(cifar_batch[b'batch_label']):
             array_train_images.append(image)
         elif 'testing' in str(cifar_batch[b'batch_label']):
@@ -85,24 +99,16 @@ for cifar_batch in cifar_array:
             array_train_labels.append(fixed_label)
         elif 'testing' in str(cifar_batch[b'batch_label']):
             array_test_labels.append(fixed_label)
-'''
-figure = plt.figure()
 
-for i in range(50):
-    subplot = figure.add_subplot(10, 5, i + 1)
-    imagem = array_train_images[i]
-    array_imagem = np.array([imagem])
-    array_imagem = array_imagem.reshape(len(array_imagem), 3, 32, 32)
-    array_imagem = array_imagem.transpose(0, 2, 3, 1)
-    plt.imshow(array_imagem[0])
 
-plt.show()
-'''
+#exibe_imagens(array_train_images)
+
 
 TAXA_APRENDIZADO = 0.001
-EPOCAS = 20
-BATCH = 320
-KEEP_PROB_TRAIN = 0.25
+EPOCAS = 1000
+BATCH = 256
+L2_BETA = 0.0001
+KEEP_PROB_TRAIN = 0.5
 KEEP_PROB_TEST = 1.0
 
 x = tf.placeholder(tf.float32, shape=[None, 3072]) # Tamanho total de uma imagem 32 x 32 x 3
@@ -112,14 +118,16 @@ y_real = tf.placeholder(tf.float32, shape=[None, 10]) # Total de 10 classes no C
 
 # LAYER 1 - Convolutional, ReLU, Convolutional, ReLU and Pooling
 
-W1_1 = tf.Variable(tf.truncated_normal([3, 3, 3, 48], stddev=0.1)) # 32 features de tamanho 5 x 5
-b1_1 = tf.Variable(tf.constant(0.1, shape=[48])) # bias para as 32 features
+kernel = 64
+
+W1_1 = tf.Variable(tf.truncated_normal([3, 3, 3, kernel], stddev=0.1)) # 32 features de tamanho 5 x 5
+b1_1 = tf.Variable(tf.constant(0.1, shape=[kernel])) # bias para as 32 features
 
 L1 = tf.nn.conv2d(x_reshape, W1_1, strides=[1, 1, 1, 1], padding='SAME') + b1_1
 L1 = tf.nn.relu(L1)
 
-W1_2 = tf.Variable(tf.truncated_normal([3, 3, 48, 48], stddev=0.1)) # 32 features de tamanho 5 x 5
-b1_2 = tf.Variable(tf.constant(0.1, shape=[48])) # bias para as 32 features
+W1_2 = tf.Variable(tf.truncated_normal([3, 3, kernel, kernel], stddev=0.1)) # 32 features de tamanho 5 x 5
+b1_2 = tf.Variable(tf.constant(0.1, shape=[kernel])) # bias para as 32 features
 
 L1 = tf.nn.conv2d(L1, W1_2, strides=[1, 1, 1, 1], padding='SAME') + b1_2
 L1 = tf.nn.relu(L1)
@@ -130,14 +138,14 @@ L1 = tf.nn.max_pool(L1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'
 
 # LAYER 2 - Convolutional, ReLU, Convolutional, ReLU and Pooling
 
-W2_1 = tf.Variable(tf.truncated_normal([3, 3, 48, 128], stddev=0.1)) # 64 features de tamanho 5 x 5
-b2_1 = tf.Variable(tf.constant(0.1, shape=[128])) # bias para as 64 features
+W2_1 = tf.Variable(tf.truncated_normal([3, 3, kernel, kernel * 2], stddev=0.1)) # 64 features de tamanho 5 x 5
+b2_1 = tf.Variable(tf.constant(0.1, shape=[kernel * 2])) # bias para as 64 features
 
 L2 = tf.nn.conv2d(L1, W2_1, strides=[1, 1, 1, 1], padding='SAME') + b2_1
 L2 = tf.nn.relu(L2)
 
-W2_2 = tf.Variable(tf.truncated_normal([3, 3, 128, 128], stddev=0.1)) # 64 features de tamanho 5 x 5
-b2_2 = tf.Variable(tf.constant(0.1, shape=[128])) # bias para as 64 features
+W2_2 = tf.Variable(tf.truncated_normal([3, 3, kernel * 2, kernel * 2], stddev=0.1)) # 64 features de tamanho 5 x 5
+b2_2 = tf.Variable(tf.constant(0.1, shape=[kernel * 2])) # bias para as 64 features
 
 L2 = tf.nn.conv2d(L2, W2_2, strides=[1, 1, 1, 1], padding='SAME') + b2_2
 L2 = tf.nn.relu(L2)
@@ -148,14 +156,14 @@ L2 = tf.nn.max_pool(L2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'
 
 # LAYER 3 - Convolutional, ReLU, Convolutional, ReLU and Pooling
 
-W3_1 = tf.Variable(tf.truncated_normal([3, 3, 128, 128], stddev=0.1)) # 64 features de tamanho 5 x 5
-b3_1 = tf.Variable(tf.constant(0.1, shape=[128])) # bias para as 64 features
+W3_1 = tf.Variable(tf.truncated_normal([3, 3, kernel * 2, kernel * 4], stddev=0.1)) # 64 features de tamanho 5 x 5
+b3_1 = tf.Variable(tf.constant(0.1, shape=[kernel * 4])) # bias para as 64 features
 
 L3 = tf.nn.conv2d(L2, W3_1, strides=[1, 1, 1, 1], padding='SAME') + b3_1
 L3 = tf.nn.relu(L3)
 
-W3_2 = tf.Variable(tf.truncated_normal([3, 3, 128, 128], stddev=0.1)) # 64 features de tamanho 5 x 5
-b3_2 = tf.Variable(tf.constant(0.1, shape=[128])) # bias para as 64 features
+W3_2 = tf.Variable(tf.truncated_normal([3, 3, kernel * 4, kernel * 4], stddev=0.1)) # 64 features de tamanho 5 x 5
+b3_2 = tf.Variable(tf.constant(0.1, shape=[kernel * 4])) # bias para as 64 features
 
 L3 = tf.nn.conv2d(L3, W3_2, strides=[1, 1, 1, 1], padding='SAME') + b3_2
 L3 = tf.nn.relu(L3)
@@ -166,23 +174,45 @@ L3 = tf.nn.max_pool(L3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME'
 
 # LAYER 4 - Fully Connected Layer
 
-Wfc1 = tf.Variable(tf.truncated_normal([4 * 4 * 128, 1024], stddev=0.1)) # 64 features foram feitas, e o tamanho final do último layer fora 8 x 8
+Wfc1 = tf.Variable(tf.truncated_normal([4 * 4 * kernel * 4, 1024], stddev=0.1)) # 64 features foram feitas, e o tamanho final do último layer fora 8 x 8
 bfc1 = tf.Variable(tf.constant(0.1, shape=[1024])) # 32 x 32 x 3
 
-L4 = tf.reshape(L3, [-1, 4 * 4 * 128])
+L4 = tf.reshape(L3, [-1, 4 * 4 * kernel * 4])
 L4 = tf.matmul(L4, Wfc1) + bfc1
 L4 = tf.nn.relu(L4)
+#L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
 
 #L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
+
+Wfc2 = tf.Variable(tf.truncated_normal([1024, 1024], stddev=0.1))
+bfc2 = tf.Variable(tf.constant(0.1, shape=[1024]))
+
+L5 = tf.reshape(L4, [-1, 1024])
+L5 = tf.matmul(L5, Wfc2) + bfc2
+L5 = tf.nn.relu(L5)
+#L5 = tf.nn.dropout(L5, keep_prob=KEEP_PROB_TRAIN)
 
 # LAYER 5 - Readout
 
 Wrl = tf.Variable(tf.truncated_normal([1024, 10], stddev=0.1)) # conectando os 3072 valores para as 10 classes do CIFAR-10
 brl = tf.Variable(tf.constant(0.1, shape=[10])) # 10 classes
 
-y_calculado = tf.matmul(L4, Wrl) + brl
+y_calculado = tf.matmul(L5, Wrl) + brl
 
 custo = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_real, logits=y_calculado))
+regularizadores = (
+    tf.nn.l2_loss(W1_1) + 
+    tf.nn.l2_loss(W1_2) + 
+    tf.nn.l2_loss(W2_1) +
+    tf.nn.l2_loss(W2_2) +
+    tf.nn.l2_loss(W3_1) +
+    tf.nn.l2_loss(W3_2) +
+    tf.nn.l2_loss(Wfc1) +
+    tf.nn.l2_loss(Wfc2) +
+    tf.nn.l2_loss(Wrl)
+    )
+
+custo = tf.reduce_mean(custo + L2_BETA * regularizadores)
 otimizador = tf.train.AdamOptimizer(learning_rate=TAXA_APRENDIZADO).minimize(custo)
 predicao = tf.equal(tf.arg_max(y_real, 1), tf.arg_max(y_calculado, 1))
 acuracia = tf.reduce_mean(tf.cast(predicao, tf.float32))
@@ -214,9 +244,7 @@ with tf.Session() as session:
             chunk_images = chunked_train_images[j]
             chunk_labels = chunked_train_labels[j]
 
-            cost_result, _ = session.run([custo, otimizador], feed_dict={x: chunk_images, y_real: chunk_labels
-            #, keep_prob: KEEP_PROB_TRAIN
-            })
+            cost_result, _ = session.run([custo, otimizador], feed_dict={x: chunk_images, y_real: chunk_labels})
             cost_list.append(cost_result)
 
         epoca_atual = i + 1
@@ -227,7 +255,7 @@ with tf.Session() as session:
 
         mensagem_epoca = 'Época: ' + str(epoca_atual) + ', custo: ' + str(custo_atual)
 
-        if (i % 10 == 0):
+        if (i == 0 or (i + 1) % 10 == 0):
             acuracia_treino = np.average(calcula_acuracia_treino(array_train_images, array_train_labels))
             acuracia_teste = np.average(calcula_acuracia_teste(array_test_images, array_test_labels))
             mensagem_epoca = mensagem_epoca + ', acurácia do treino: ' + str(acuracia_treino) + ', acurácia do teste: ' + str(acuracia_teste)
