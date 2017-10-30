@@ -40,7 +40,6 @@ def calcula_acuracia_treino(array_train_images, array_train_labels):
         #keep_prob: KEEP_PROB_TEST
         })
         accuracy_list.append(calculated_accuracy)
-        #print(calculated_accuracy)
 
     return accuracy_list
 
@@ -58,7 +57,6 @@ def calcula_acuracia_teste(array_test_images, array_test_labels):
         #, keep_prob: KEEP_PROB_TEST
         })
         accuracy_list.append(calculated_accuracy)
-        #print(calculated_accuracy)
         
     return accuracy_list
 
@@ -105,11 +103,13 @@ for cifar_batch in cifar_array:
 
 
 TAXA_APRENDIZADO = 0.001
-EPOCAS = 1000
-BATCH = 256
+EPOCAS = 200
+BATCH = 512
 L2_BETA = 0.0001
 KEEP_PROB_TRAIN = 0.5
 KEEP_PROB_TEST = 1.0
+VIA_TENSORBOARD = True
+LOGDIR = '/tmp/tensorflow/cifar10-5'
 
 x = tf.placeholder(tf.float32, shape=[None, 3072]) # Tamanho total de uma imagem 32 x 32 x 3
 x_reshape = tf.reshape(x, [-1, 3, 32, 32])
@@ -120,106 +120,132 @@ y_real = tf.placeholder(tf.float32, shape=[None, 10]) # Total de 10 classes no C
 
 kernel = 64
 
-W1_1 = tf.Variable(tf.truncated_normal([3, 3, 3, kernel], stddev=0.1)) # 32 features de tamanho 5 x 5
-b1_1 = tf.Variable(tf.constant(0.1, shape=[kernel])) # bias para as 32 features
+with tf.name_scope('Layer_1'):
+    W1_1 = tf.Variable(tf.truncated_normal([3, 3, 3, kernel], stddev=0.1), name='W1_1') # 32 features de tamanho 5 x 5
+    b1_1 = tf.Variable(tf.constant(0.1, shape=[kernel]), name='b1_1') # bias para as 32 features
 
-L1 = tf.nn.conv2d(x_reshape, W1_1, strides=[1, 1, 1, 1], padding='SAME') + b1_1
-L1 = tf.nn.relu(L1)
+    L1 = tf.nn.conv2d(x_reshape, W1_1, strides=[1, 1, 1, 1], padding='SAME', name='L1_1_conv2d') + b1_1
+    L1 = tf.nn.relu(L1, name='L1_1_relu')
 
-W1_2 = tf.Variable(tf.truncated_normal([3, 3, kernel, kernel], stddev=0.1)) # 32 features de tamanho 5 x 5
-b1_2 = tf.Variable(tf.constant(0.1, shape=[kernel])) # bias para as 32 features
+    W1_2 = tf.Variable(tf.truncated_normal([3, 3, kernel, kernel], stddev=0.1), name='W1_2') # 32 features de tamanho 5 x 5
+    b1_2 = tf.Variable(tf.constant(0.1, shape=[kernel]), name='b1_2') # bias para as 32 features
 
-L1 = tf.nn.conv2d(L1, W1_2, strides=[1, 1, 1, 1], padding='SAME') + b1_2
-L1 = tf.nn.relu(L1)
+    L1 = tf.nn.conv2d(L1, W1_2, strides=[1, 1, 1, 1], padding='SAME', name='L1_2_conv2d') + b1_2
+    L1 = tf.nn.relu(L1, name='L1_2_conv2d')
 
-L1 = tf.nn.max_pool(L1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+    L1 = tf.nn.max_pool(L1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='L1_maxpool')
 
-#L1 = tf.nn.dropout(L1, keep_prob=KEEP_PROB_TRAIN)
+    L1 = tf.nn.lrn(L1, 4, bias=1, alpha=0.001 / 9, beta=0.75, name='L1_local_normalization')
+
+    #L1 = tf.nn.dropout(L1, keep_prob=KEEP_PROB_TRAIN)
 
 # LAYER 2 - Convolutional, ReLU, Convolutional, ReLU and Pooling
+with tf.name_scope('Layer_2'):
+    W2_1 = tf.Variable(tf.truncated_normal([3, 3, kernel, kernel * 2], stddev=0.1), name='W2_1') # 64 features de tamanho 5 x 5
+    b2_1 = tf.Variable(tf.constant(0.1, shape=[kernel * 2]), name='b2_1') # bias para as 64 features
 
-W2_1 = tf.Variable(tf.truncated_normal([3, 3, kernel, kernel * 2], stddev=0.1)) # 64 features de tamanho 5 x 5
-b2_1 = tf.Variable(tf.constant(0.1, shape=[kernel * 2])) # bias para as 64 features
+    L2 = tf.nn.conv2d(L1, W2_1, strides=[1, 1, 1, 1], padding='SAME', name='L2_1_conv2d') + b2_1
+    L2 = tf.nn.relu(L2, name='L2_1_relu')
 
-L2 = tf.nn.conv2d(L1, W2_1, strides=[1, 1, 1, 1], padding='SAME') + b2_1
-L2 = tf.nn.relu(L2)
+    W2_2 = tf.Variable(tf.truncated_normal([3, 3, kernel * 2, kernel * 2], stddev=0.1), name='W2_2') # 64 features de tamanho 5 x 5
+    b2_2 = tf.Variable(tf.constant(0.1, shape=[kernel * 2]), name='b2_2') # bias para as 64 features
 
-W2_2 = tf.Variable(tf.truncated_normal([3, 3, kernel * 2, kernel * 2], stddev=0.1)) # 64 features de tamanho 5 x 5
-b2_2 = tf.Variable(tf.constant(0.1, shape=[kernel * 2])) # bias para as 64 features
+    L2 = tf.nn.conv2d(L2, W2_2, strides=[1, 1, 1, 1], padding='SAME', name='L2_2_conv2d') + b2_2
+    L2 = tf.nn.relu(L2, name='L2_2_relu')
 
-L2 = tf.nn.conv2d(L2, W2_2, strides=[1, 1, 1, 1], padding='SAME') + b2_2
-L2 = tf.nn.relu(L2)
+    L2 = tf.nn.max_pool(L2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='L2_maxpool')
 
-L2 = tf.nn.max_pool(L2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+    L2 = tf.nn.lrn(L2, 4, bias=1, alpha=0.001 / 9, beta=0.75, name='L2_local_normalization')
 
 #L2 = tf.nn.dropout(pool2, keep_prob=KEEP_PROB_TRAIN)
 
 # LAYER 3 - Convolutional, ReLU, Convolutional, ReLU and Pooling
+with tf.name_scope('Layer_3'):
+    W3_1 = tf.Variable(tf.truncated_normal([3, 3, kernel * 2, kernel * 4], stddev=0.1), name='W3_1') # 64 features de tamanho 5 x 5
+    b3_1 = tf.Variable(tf.constant(0.1, shape=[kernel * 4]), name='b3_1') # bias para as 64 features
 
-W3_1 = tf.Variable(tf.truncated_normal([3, 3, kernel * 2, kernel * 4], stddev=0.1)) # 64 features de tamanho 5 x 5
-b3_1 = tf.Variable(tf.constant(0.1, shape=[kernel * 4])) # bias para as 64 features
+    L3 = tf.nn.conv2d(L2, W3_1, strides=[1, 1, 1, 1], padding='SAME', name='L3_1_conv2d') + b3_1
+    L3 = tf.nn.relu(L3, name='L3_1_relu')
 
-L3 = tf.nn.conv2d(L2, W3_1, strides=[1, 1, 1, 1], padding='SAME') + b3_1
-L3 = tf.nn.relu(L3)
+    W3_2 = tf.Variable(tf.truncated_normal([3, 3, kernel * 4, kernel * 4], stddev=0.1), name='W3_2') # 64 features de tamanho 5 x 5
+    b3_2 = tf.Variable(tf.constant(0.1, shape=[kernel * 4]), name='b3_2') # bias para as 64 features
 
-W3_2 = tf.Variable(tf.truncated_normal([3, 3, kernel * 4, kernel * 4], stddev=0.1)) # 64 features de tamanho 5 x 5
-b3_2 = tf.Variable(tf.constant(0.1, shape=[kernel * 4])) # bias para as 64 features
+    L3 = tf.nn.conv2d(L3, W3_2, strides=[1, 1, 1, 1], padding='SAME', name='L3_2_conv2d') + b3_2
+    L3 = tf.nn.relu(L3, name='L3_2_relu')
 
-L3 = tf.nn.conv2d(L3, W3_2, strides=[1, 1, 1, 1], padding='SAME') + b3_2
-L3 = tf.nn.relu(L3)
+    L3 = tf.nn.max_pool(L3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='L3_maxpool')
 
-L3 = tf.nn.max_pool(L3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+    L3 = tf.nn.lrn(L3, 4, bias=1, alpha=0.001 / 9, beta=0.75, name='L3_local_normalization')
 
-#L3 = tf.nn.dropout(L3, keep_prob=KEEP_PROB_TRAIN)
+    #L3 = tf.nn.dropout(L3, keep_prob=KEEP_PROB_TRAIN)
 
 # LAYER 4 - Fully Connected Layer
+with tf.name_scope('Layer_4'):
+    Wfc1 = tf.Variable(tf.truncated_normal([4 * 4 * kernel * 4, 1024], stddev=0.1), name='Wfc1') # 64 features foram feitas, e o tamanho final do último layer fora 8 x 8
+    bfc1 = tf.Variable(tf.constant(0.1, shape=[1024]), name='bfc1') # 32 x 32 x 3
 
-Wfc1 = tf.Variable(tf.truncated_normal([4 * 4 * kernel * 4, 1024], stddev=0.1)) # 64 features foram feitas, e o tamanho final do último layer fora 8 x 8
-bfc1 = tf.Variable(tf.constant(0.1, shape=[1024])) # 32 x 32 x 3
+    L4 = tf.reshape(L3, [-1, 4 * 4 * kernel * 4], name='L4_reshape')
+    L4 = tf.matmul(L4, Wfc1, name='L4_matmul') + bfc1
+    L4 = tf.nn.relu(L4, name='L4_relu')
+    #L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
 
-L4 = tf.reshape(L3, [-1, 4 * 4 * kernel * 4])
-L4 = tf.matmul(L4, Wfc1) + bfc1
-L4 = tf.nn.relu(L4)
-#L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
+    #L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
+with tf.name_scope('Layer_5'):
+    Wfc2 = tf.Variable(tf.truncated_normal([1024, 1024], stddev=0.1), name='Wfc2')
+    bfc2 = tf.Variable(tf.constant(0.1, shape=[1024]), name='bfc2')
 
-#L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
-
-Wfc2 = tf.Variable(tf.truncated_normal([1024, 1024], stddev=0.1))
-bfc2 = tf.Variable(tf.constant(0.1, shape=[1024]))
-
-L5 = tf.reshape(L4, [-1, 1024])
-L5 = tf.matmul(L5, Wfc2) + bfc2
-L5 = tf.nn.relu(L5)
-#L5 = tf.nn.dropout(L5, keep_prob=KEEP_PROB_TRAIN)
+    L5 = tf.reshape(L4, [-1, 1024], name='L5_reshape')
+    L5 = tf.matmul(L5, Wfc2, name='L5_matmul') + bfc2
+    L5 = tf.nn.relu(L5, name='L5_relu')
+    #L5 = tf.nn.dropout(L5, keep_prob=KEEP_PROB_TRAIN)
 
 # LAYER 5 - Readout
+with tf.name_scope('Layer_6'):
+    Wrl = tf.Variable(tf.truncated_normal([1024, 10], stddev=0.1), name='Wrl') # conectando os 3072 valores para as 10 classes do CIFAR-10
+    brl = tf.Variable(tf.constant(0.1, shape=[10]), name='brl') # 10 classes
 
-Wrl = tf.Variable(tf.truncated_normal([1024, 10], stddev=0.1)) # conectando os 3072 valores para as 10 classes do CIFAR-10
-brl = tf.Variable(tf.constant(0.1, shape=[10])) # 10 classes
+    y_calculado = tf.matmul(L5, Wrl, name='y_matmul') + brl
 
-y_calculado = tf.matmul(L5, Wrl) + brl
+with tf.name_scope('cross_entropy'):
+    softmax = tf.nn.softmax_cross_entropy_with_logits(labels=y_real, logits=y_calculado)
+    with tf.name_scope('total'):
+        custo = tf.reduce_mean(softmax)
 
-custo = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_real, logits=y_calculado))
-regularizadores = (
-    tf.nn.l2_loss(W1_1) + 
-    tf.nn.l2_loss(W1_2) + 
-    tf.nn.l2_loss(W2_1) +
-    tf.nn.l2_loss(W2_2) +
-    tf.nn.l2_loss(W3_1) +
-    tf.nn.l2_loss(W3_2) +
-    tf.nn.l2_loss(Wfc1) +
-    tf.nn.l2_loss(Wfc2) +
-    tf.nn.l2_loss(Wrl)
-    )
+        regularizadores = (
+            tf.nn.l2_loss(W1_1) + 
+            tf.nn.l2_loss(W1_2) + 
+            tf.nn.l2_loss(W2_1) +
+            tf.nn.l2_loss(W2_2) +
+            tf.nn.l2_loss(W3_1) +
+            tf.nn.l2_loss(W3_2) +
+            tf.nn.l2_loss(Wfc1) +
+            tf.nn.l2_loss(Wfc2) +
+            tf.nn.l2_loss(Wrl)
+            )
 
-custo = tf.reduce_mean(custo + L2_BETA * regularizadores)
-otimizador = tf.train.AdamOptimizer(learning_rate=TAXA_APRENDIZADO).minimize(custo)
-predicao = tf.equal(tf.arg_max(y_real, 1), tf.arg_max(y_calculado, 1))
-acuracia = tf.reduce_mean(tf.cast(predicao, tf.float32))
+        custo = tf.reduce_mean(custo + L2_BETA * regularizadores)
+
+tf.summary.scalar('custo', custo)
+
+with tf.name_scope('otimizador'):
+    otimizador = tf.train.AdamOptimizer(learning_rate=TAXA_APRENDIZADO).minimize(custo)
+
+with tf.name_scope('acuracia'):
+    with tf.name_scope('predicao'):
+        predicao = tf.equal(tf.arg_max(y_real, 1), tf.arg_max(y_calculado, 1))
+    with tf.name_scope('acuracia'):
+        acuracia = tf.reduce_mean(tf.cast(predicao, tf.float32))
+tf.summary.scalar('acuracia', acuracia)
 
 with tf.Session() as session:
 
     print("Início do treinamento")
+
+    merge = tf.summary.merge_all()
+
+    if (VIA_TENSORBOARD == True):
+        train_writer = tf.summary.FileWriter(LOGDIR + '/train', session.graph)
+        test_writer = tf.summary.FileWriter(LOGDIR + '/test')
 
     session.run(tf.global_variables_initializer())
 
@@ -240,53 +266,92 @@ with tf.Session() as session:
         chunked_train_images = list(chunked(array_train_images, BATCH))
         chunked_train_labels = list(chunked(array_train_labels, BATCH))
 
+        epoca_atual = i + 1
+
         for j in range(len(chunked_train_images)): # o tamanho do array de imagens e labels é o mesmo
             chunk_images = chunked_train_images[j]
             chunk_labels = chunked_train_labels[j]
+                
+            if (VIA_TENSORBOARD == True):
+                cost_result, _ = session.run([merge, otimizador], feed_dict={x: chunk_images, y_real: chunk_labels})
+                train_writer.add_summary(cost_result, epoca_atual)
+            else:
+                cost_result, _ = session.run([custo, otimizador], feed_dict={x: chunk_images, y_real: chunk_labels})
+                cost_list.append(cost_result)
 
-            cost_result, _ = session.run([custo, otimizador], feed_dict={x: chunk_images, y_real: chunk_labels})
-            cost_list.append(cost_result)
-
-        epoca_atual = i + 1
         lista_epocas.append(epoca_atual)
+        mensagem_epoca = 'Época: ' + str(epoca_atual)
+        if(VIA_TENSORBOARD == False):
+            
+            custo_atual = np.average(cost_list)
+            lista_custos.append(custo_atual)
+            
+            mensagem_epoca = mensagem_epoca + ', custo: ' + str(custo_atual)
+            
+        #train_writer.add_summary(custo_atual, epoca_atual)
+            
+        # TODO: corrigir duplicidade em cálculo de custo por lotes
+        if (i == 0 or (i + 1) % 5 == 0):
+            if(VIA_TENSORBOARD == False):
+                acuracia_treino = np.average(calcula_acuracia_treino(array_train_images, array_train_labels))
+                acuracia_teste = np.average(calcula_acuracia_teste(array_test_images, array_test_labels))
+                mensagem_epoca = mensagem_epoca + ', acurácia do treino: ' + str(acuracia_treino) + ', acurácia do teste: ' + str(acuracia_teste)
+            else:
+                test_cost_list = []
 
-        custo_atual = np.average(cost_list)
-        lista_custos.append(custo_atual)
+                chunked_test_images = list(chunked(array_test_images, BATCH))
+                chunked_test_labels = list(chunked(array_test_labels, BATCH))
 
-        mensagem_epoca = 'Época: ' + str(epoca_atual) + ', custo: ' + str(custo_atual)
+                for j in range(len(chunked_test_images)): # o tamanho do array de imagens e labels é o mesmo
+                    test_chunk_images = chunked_test_images[j]
+                    test_chunk_labels = chunked_test_labels[j]
 
-        if (i == 0 or (i + 1) % 10 == 0):
-            acuracia_treino = np.average(calcula_acuracia_treino(array_train_images, array_train_labels))
-            acuracia_teste = np.average(calcula_acuracia_teste(array_test_images, array_test_labels))
-            mensagem_epoca = mensagem_epoca + ', acurácia do treino: ' + str(acuracia_treino) + ', acurácia do teste: ' + str(acuracia_teste)
+                    if (VIA_TENSORBOARD == True):
+                        test_cost_result, _ = session.run([merge, acuracia], feed_dict={x: test_chunk_images, y_real: test_chunk_labels})
+                        test_writer.add_summary(test_cost_result, epoca_atual)
+                    else:
+                        test_cost_result, _ = session.run([custo, otimizador], feed_dict={x: test_chunk_images, y_real: test_chunk_labels})
+                        test_cost_list.append(test_cost_result)        
+            '''
+            test_writer.add_summary(test_custo_atual, epoca_atual)
+            '''
 
+            #if(VIA_TENSORBOARD == False):
+            #    test_custo_atual = np.average(test_cost_list)
+        
         tempo_epoca = datetime.datetime.now() - inicio_epoca
         mensagem_epoca = mensagem_epoca + '\nTempo de treino: ' + str(tempo_epoca) + '\n'
-
+        
         print(mensagem_epoca)
-
+        
         i += 1
 
     # RESULTADO DAS ACURÁCIAS
-
+    
     acuracia_treino = np.average(calcula_acuracia_treino(array_train_images, array_train_labels))
     acuracia_teste = np.average(calcula_acuracia_teste(array_test_images, array_test_labels))
 
-    mensagem_resultado_final = 'Taxa de aprendizado: ' + str(TAXA_APRENDIZADO) + ', batch: ' + str(BATCH) + ', custo final: ' + str(lista_custos[-1]) + ', acurácia do treino: ' + str(acuracia_treino) + ', acurácia do teste: ' + str(acuracia_teste)
-    print(mensagem_resultado_final)
-    plt.title(mensagem_resultado_final)
-
-    lista_custos[0] = lista_custos[1]
-
-    #subplot = figure.add_subplot(1, 3, 1)
-    plt.xlabel('Época')
-    plt.ylabel('Custo')
-    plt.plot(lista_epocas, lista_custos, 'blue')
-
     print('Tempo total: ' + str(datetime.datetime.now() - inicio))
+    mensagem_resultado_final = 'Taxa de aprendizado: ' + str(TAXA_APRENDIZADO) + ', batch: ' + str(BATCH)
 
-    plt.show()
+    if(VIA_TENSORBOARD == False): 
+        mensagem_resultado_final = mensagem_resultado_final + ', custo final: ' + str(lista_custos[-1])
+        
+    mensagem_resultado_final = mensagem_resultado_final  + ', acurácia do treino: ' + str(acuracia_treino) + ', acurácia do teste: ' + str(acuracia_teste)
+    print(mensagem_resultado_final)
+    if(VIA_TENSORBOARD == False):
+        plt.title(mensagem_resultado_final)
+
+        lista_custos[0] = lista_custos[1]
+
+        #subplot = figure.add_subplot(1, 3, 1)
+        plt.xlabel('Época')
+        plt.ylabel('Custo')
+        plt.plot(lista_epocas, lista_custos, 'blue')
+        '''
+        '''
+        plt.show()
 
     print('Taxa de acerto do treino: ' + str(acuracia_treino))
     print('Taxa de acerto do teste: ' + str(acuracia_teste))
-
+    
