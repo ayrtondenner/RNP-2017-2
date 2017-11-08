@@ -103,13 +103,13 @@ for cifar_batch in cifar_array:
 
 
 TAXA_APRENDIZADO = 0.001
-EPOCAS = 200
-BATCH = 512
-L2_BETA = 0.0001
-KEEP_PROB_TRAIN = 0.5
+EPOCAS = 100
+BATCH = 64
+L2_BETA = 0.0005
+KEEP_PROB_TRAIN = 0.50
 KEEP_PROB_TEST = 1.0
 VIA_TENSORBOARD = True
-LOGDIR = '/tmp/tensorflow/cifar10-5'
+LOGDIR = '/tmp/tensorflow/cifar10-dp-7'
 
 x = tf.placeholder(tf.float32, shape=[None, 3072]) # Tamanho total de uma imagem 32 x 32 x 3
 x_reshape = tf.reshape(x, [-1, 3, 32, 32])
@@ -137,8 +137,6 @@ with tf.name_scope('Layer_1'):
 
     L1 = tf.nn.lrn(L1, 4, bias=1, alpha=0.001 / 9, beta=0.75, name='L1_local_normalization')
 
-    #L1 = tf.nn.dropout(L1, keep_prob=KEEP_PROB_TRAIN)
-
 # LAYER 2 - Convolutional, ReLU, Convolutional, ReLU and Pooling
 with tf.name_scope('Layer_2'):
     W2_1 = tf.Variable(tf.truncated_normal([3, 3, kernel, kernel * 2], stddev=0.1), name='W2_1') # 64 features de tamanho 5 x 5
@@ -156,8 +154,6 @@ with tf.name_scope('Layer_2'):
     L2 = tf.nn.max_pool(L2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name='L2_maxpool')
 
     L2 = tf.nn.lrn(L2, 4, bias=1, alpha=0.001 / 9, beta=0.75, name='L2_local_normalization')
-
-#L2 = tf.nn.dropout(pool2, keep_prob=KEEP_PROB_TRAIN)
 
 # LAYER 3 - Convolutional, ReLU, Convolutional, ReLU and Pooling
 with tf.name_scope('Layer_3'):
@@ -177,8 +173,6 @@ with tf.name_scope('Layer_3'):
 
     L3 = tf.nn.lrn(L3, 4, bias=1, alpha=0.001 / 9, beta=0.75, name='L3_local_normalization')
 
-    #L3 = tf.nn.dropout(L3, keep_prob=KEEP_PROB_TRAIN)
-
 # LAYER 4 - Fully Connected Layer
 with tf.name_scope('Layer_4'):
     Wfc1 = tf.Variable(tf.truncated_normal([4 * 4 * kernel * 4, 1024], stddev=0.1), name='Wfc1') # 64 features foram feitas, e o tamanho final do último layer fora 8 x 8
@@ -187,9 +181,9 @@ with tf.name_scope('Layer_4'):
     L4 = tf.reshape(L3, [-1, 4 * 4 * kernel * 4], name='L4_reshape')
     L4 = tf.matmul(L4, Wfc1, name='L4_matmul') + bfc1
     L4 = tf.nn.relu(L4, name='L4_relu')
-    #L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
 
-    #L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
+    L4 = tf.nn.dropout(L4, keep_prob=KEEP_PROB_TRAIN)
+
 with tf.name_scope('Layer_5'):
     Wfc2 = tf.Variable(tf.truncated_normal([1024, 1024], stddev=0.1), name='Wfc2')
     bfc2 = tf.Variable(tf.constant(0.1, shape=[1024]), name='bfc2')
@@ -197,7 +191,8 @@ with tf.name_scope('Layer_5'):
     L5 = tf.reshape(L4, [-1, 1024], name='L5_reshape')
     L5 = tf.matmul(L5, Wfc2, name='L5_matmul') + bfc2
     L5 = tf.nn.relu(L5, name='L5_relu')
-    #L5 = tf.nn.dropout(L5, keep_prob=KEEP_PROB_TRAIN)
+
+    L5 = tf.nn.dropout(L5, keep_prob=KEEP_PROB_TRAIN)
 
 # LAYER 5 - Readout
 with tf.name_scope('Layer_6'):
@@ -210,19 +205,19 @@ with tf.name_scope('cross_entropy'):
     softmax = tf.nn.softmax_cross_entropy_with_logits(labels=y_real, logits=y_calculado)
     with tf.name_scope('total'):
         custo = tf.reduce_mean(softmax)
-
+        
         regularizadores = (
             tf.nn.l2_loss(W1_1) + 
             tf.nn.l2_loss(W1_2) + 
             tf.nn.l2_loss(W2_1) +
             tf.nn.l2_loss(W2_2) +
             tf.nn.l2_loss(W3_1) +
-            tf.nn.l2_loss(W3_2) +
-            tf.nn.l2_loss(Wfc1) +
-            tf.nn.l2_loss(Wfc2) +
-            tf.nn.l2_loss(Wrl)
+            tf.nn.l2_loss(W3_2)
+            #tf.nn.l2_loss(Wfc1) +
+            #tf.nn.l2_loss(Wfc2) +
+            #tf.nn.l2_loss(Wrl)
             )
-
+        
         custo = tf.reduce_mean(custo + L2_BETA * regularizadores)
 
 tf.summary.scalar('custo', custo)
