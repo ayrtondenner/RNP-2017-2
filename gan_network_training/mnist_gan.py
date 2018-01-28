@@ -8,8 +8,10 @@ from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("MNIST_data/")
 
 desvio_padrao = 0.02
-TAXA_TREINAMENTO = 10^(-4) # 0.0001
-LOGDIR = '/tmp/tensorflow/mnist_gan ' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '/'
+TAXA_TREINAMENTO = 10**(-4) # 0.0001
+LOGDIR = '/tensorboard/mnist_gan ' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '/'
+
+print("Logdir: " + LOGDIR)
 
 def generator(z, batch_size, z_dim):
 
@@ -56,63 +58,58 @@ def generator(z, batch_size, z_dim):
     return g4
 
 
-def discriminator(images, reuse = False):
+def discriminator(images, reuse=None):
 
     TAMANHO_IMAGEM = 28
     KERNEL = 32
 
-    if reuse:
-        tf.get_variable_scope().reuse_variables()
+    with tf.variable_scope(tf.get_variable_scope(), reuse=reuse) as scope:
 
-    # Camada 1 - Primeira camada convolucional
-    # Retorna 32 filtros de tamanho 5 x 5
-    d_w1 = tf.get_variable('d_w1', [5, 5, 1, KERNEL], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    d_b1 = tf.get_variable('d_b2', [KERNEL], initializer=tf.constant_initializer(0))
+        # Camada 1 - Primeira camada convolucional
+        # Retorna 32 filtros de tamanho 5 x 5
+        d_w1 = tf.get_variable('d_w1', [5, 5, 1, KERNEL], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        d_b1 = tf.get_variable('d_b1', [KERNEL], initializer=tf.constant_initializer(0))
 
-    d1 = tf.nn.conv2d(input=images, filter=d_w1, strides=[1, 1, 1, 1], padding='SAME') + d_b1
-    d1 = tf.nn.relu(d1)
-    d1 = tf.nn.max_pool(d1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        d1 = tf.nn.conv2d(input=images, filter=d_w1, strides=[1, 1, 1, 1], padding='SAME') + d_b1
+        d1 = tf.nn.relu(d1)
+        d1 = tf.nn.max_pool(d1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-    TAMANHO_IMAGEM = TAMANHO_IMAGEM / 2
-    KERNEL = KERNEL * 2
+        TAMANHO_IMAGEM = TAMANHO_IMAGEM / 2
+        KERNEL = KERNEL * 2
 
-    # Camada 2 - Segunda camada convolucional
-    # Retorna 64 filtros de tamanho 5 x 5
-    d_w2 = tf.get_variable('d_w2', [5, 5, KERNEL/2, KERNEL], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    d_b2 = tf.get_variable('d_b2', [KERNEL], initializer=tf.constant_initializer(0))
+        # Camada 2 - Segunda camada convolucional
+        # Retorna 64 filtros de tamanho 5 x 5
+        d_w2 = tf.get_variable('d_w2', [5, 5, KERNEL/2, KERNEL], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        d_b2 = tf.get_variable('d_b2', [KERNEL], initializer=tf.constant_initializer(0))
 
-    d2 = tf.nn.conv2d(input=images, filter=d_w2, strides=[1, 1, 1, 1], padding='SAME') + d_b2
-    d2 = tf.nn.relu(d2)
-    d2 = tf.nn.max_pool(d2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        d2 = tf.nn.conv2d(input=d1, filter=d_w2, strides=[1, 1, 1, 1], padding='SAME') + d_b2
+        d2 = tf.nn.relu(d2)
+        d2 = tf.nn.max_pool(d2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-    TAMANHO_IMAGEM = TAMANHO_IMAGEM / 2
+        TAMANHO_IMAGEM = TAMANHO_IMAGEM / 2
 
-    # Camada 3 - Primeira camada fully connected
+        # Camada 3 - Primeira camada fully connected
 
-    entrada_fc = TAMANHO_IMAGEM * TAMANHO_IMAGEM * KERNEL
+        entrada_fc = int(TAMANHO_IMAGEM * TAMANHO_IMAGEM * KERNEL)
 
-    d_w3 = tf.get_variable('d_w3', [entrada_fc, 1024], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    d_b3 = tf.get_variable('d_b3', [1024], initializer=tf.constant_initializer(0))
+        d_w3 = tf.get_variable('d_w3', [entrada_fc, 1024], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        d_b3 = tf.get_variable('d_b3', [1024], initializer=tf.constant_initializer(0))
 
-    d3 = tf.reshape(d2, [-1, entrada_fc])
-    d3 = tf.matmul(d3, d_w3) + d_b3
-    d3 = tf.nn.relu(d3)
+        d3 = tf.reshape(d2, [-1, entrada_fc])
+        d3 = tf.matmul(d3, d_w3) + d_b3
+        d3 = tf.nn.relu(d3)
 
-    # Camada 4 - Segunda camada fully connected - Readout
+        # Camada 4 - Segunda camada fully connected - Readout
 
-    d_w4 = tf.get_variable('d_w4', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
+        d_w4 = tf.get_variable('d_w4', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
 
-    d4 = tf.matmul(d3, d_w4) + d_b4
+        d4 = tf.matmul(d3, d_w4) + d_b4
 
-    return d4
+        return d4
 
 # Definindo batch de ruído aleatório
 z_dimensions = 100
-z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
-
-generated_image_output = generator(z_placeholder, 1, z_dimensions)
-
 batch_size = 50
 
 # Placeholder para ruído
@@ -131,19 +128,22 @@ Dx = discriminator(x_placeholder)
 Dg = discriminator(Gz, reuse = True)
 
 # Loss de imagens reais
-d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(Dx, tf.ones_like(Dx)))
+d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = Dx, labels = tf.ones_like(Dx)))
 
 # Loss de imagens falsas
-d_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(Dg, tf.zeros_like(Dg)))
+d_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = Dg, labels = tf.zeros_like(Dg)))
 
 # Loss para o gerador, que quer que suas imagens se passem por reais
-g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(Dg, tf.ones_like(Dg)))
+g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = Dg, labels = tf.ones_like(Dg)))
 
 # Separando variáveis entre discriminador e gerador
 tvars = tf.trainable_variables()
 
 d_vars = [var for var in tvars if 'd_' in var.name]
 g_vars = [var for var in tvars if 'g_' in var.name]
+
+#print(d_vars)
+#print(g_vars)
 
 # Optimizador para o treino de discriminação de imagens falsas
 d_trainer_fake = tf.train.AdamOptimizer(TAXA_TREINAMENTO).minimize(d_loss_fake, var_list=d_vars)
@@ -166,7 +166,7 @@ with tf.Session() as sess:
     tf.summary.image('Generated_images', images_for_tensorboard, 5)
 
     merged = tf.summary.merge_all()
-    writer = tf.summary.FileWriter(logdir, sess.graph)
+    writer = tf.summary.FileWriter(LOGDIR, sess.graph)
 
     sess.run(tf.global_variables_initializer())
 
@@ -182,7 +182,8 @@ with tf.Session() as sess:
 
     # Treino do gerador e do discriminador
 
-    for i in range(10^6):
+    for i in range(10**6):
+        #print("Época #" + str(i))
         real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
         z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
 
@@ -213,9 +214,3 @@ with tf.Session() as sess:
             result = discriminator(x_placeholder)
             estimate = sess.run(result, {x_placeholder: im})
             print("Estimate:", estimate)
-    
-    generated_image = sess.run(generated_image_output, feed_dict={z_placeholder: z_batch})
-    generated_image = generated_image.reshape([28, 28])
-
-    plt.imshow(generated_image, cmap='Greys')
-    plt.show()
