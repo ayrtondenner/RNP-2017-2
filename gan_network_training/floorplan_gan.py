@@ -4,18 +4,62 @@ import datetime
 import matplotlib.pyplot as plt
 #matplotlib inline
 
-from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("MNIST_data/")
+from PIL import Image
+import glob
 
-desvio_padrao = 0.02
-TAXA_TREINAMENTO = 10**(-4) # 0.0001
-LOGDIR = '/tensorboard/mnist_gan_' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '/'
+next_batch_index = 0
+TAMANHO_RESIZE = 512
 
-print("Logdir: " + LOGDIR)
+def get_all_images(images_path):
+
+    image_list = []
+
+    for filename in glob.glob(images_path + '*.*'):
+        '''
+        image = Image.open(filename)
+        image.load()
+        data = np.asarray(image, dtype="int32")
+        image_list.append(data)
+        '''
+
+        image = Image.open(filename)
+        #image = image.convert('1')
+        #image.thumbnail((TAMANHO_RESIZE, TAMANHO_RESIZE), Image.ANTIALIAS)
+        image = image.resize( (TAMANHO_RESIZE, TAMANHO_RESIZE) )
+        array = np.array(image)
+        array = np.hstack(array)
+
+        # .reshape([batch_size, TAMANHO_RESIZE, TAMANHO_RESIZE, 1])
+
+        image_list.append(array)
+
+        if (len(image_list) == 10):
+            break
+
+    return image_list
+
+def floorplan_next_batch(list_images, batch_size):
+
+    global next_batch_index
+
+    batch_images = []
+
+    for i in range(batch_size):
+
+        batch_images.append(list_images[next_batch_index])
+
+        next_batch_index += 1
+
+        # Caso o index de próximo item seja maior que a quantidade de itens na lista, volta-se para a imagem inicial
+        if(next_batch_index >= len(list_images)):
+            next_batch_index = 0        
+
+    return np.array(batch_images)
+        
 
 def generator(z, batch_size, z_dim):
 
-    TAMANHO_IMAGEM = 56
+    TAMANHO_IMAGEM = TAMANHO_RESIZE * 2
 
     # Camada 1
 
@@ -60,7 +104,7 @@ def generator(z, batch_size, z_dim):
 
 def discriminator(images, reuse=None):
 
-    TAMANHO_IMAGEM = 28
+    TAMANHO_IMAGEM = 512
     KERNEL = 32
 
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse) as scope:
@@ -108,6 +152,15 @@ def discriminator(images, reuse=None):
 
         return d4
 
+desvio_padrao = 0.02
+TAXA_TREINAMENTO = 10**(-4) # 0.0001
+LOGDIR = '/tensorboard/floorplan_gan_' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '/'
+IMAGES_PATH = 'input/real/'
+
+print("Logdir: " + LOGDIR)
+
+image_list = get_all_images(IMAGES_PATH)
+
 # Definindo batch de ruído aleatório
 z_dimensions = 100
 batch_size = 64
@@ -116,7 +169,7 @@ batch_size = 64
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 
 # Placeholder para imagens enviadas ao discriminador
-x_placeholder = tf.placeholder(tf.float32, shape=[None, 28, 28, 1], name='x_placeholder')
+x_placeholder = tf.placeholder(tf.float32, shape=[None, TAMANHO_RESIZE, TAMANHO_RESIZE, 1], name='x_placeholder')
 
 # Gerador de ruídos
 Gz = generator(z_placeholder, batch_size, z_dimensions)
@@ -174,7 +227,7 @@ with tf.Session() as sess:
     for i in range(300):
 
         z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
-        real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
+        real_image_batch =  floorplan_next_batch(image_list, batch_size).reshape([batch_size, TAMANHO_RESIZE, TAMANHO_RESIZE, 1])
         _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_image_batch, z_placeholder: z_batch})
 
         if (i % 100 == 0):
@@ -184,7 +237,7 @@ with tf.Session() as sess:
 
     for i in range(10**6):
         #print("Época #" + str(i))
-        real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size, 28, 28, 1])
+        real_image_batch = floorplan_next_batch(image_list, batch_size).reshape([batch_size, TAMANHO_RESIZE, TAMANHO_RESIZE, 1])
         z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
 
         # Treino do discriminador com imagens reais e falsas
