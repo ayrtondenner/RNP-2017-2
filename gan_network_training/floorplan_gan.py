@@ -1,18 +1,23 @@
+import datetime
+
+inicio = datetime.datetime.now()
+print("Início: " + str(inicio))
+
 import tensorflow as tf
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
+import cv2
+
 #matplotlib inline
 
-from PIL import Image
 import glob
-
-next_batch_index = 0
-TAMANHO_RESIZE = 512
 
 def get_all_images(images_path):
 
     image_list = []
+
+    print("Lendo imagens...")
 
     for filename in glob.glob(images_path + '*.*'):
         '''
@@ -22,23 +27,23 @@ def get_all_images(images_path):
         image_list.append(data)
         '''
 
-        image = Image.open(filename)
-        #image = image.convert('1')
-        #image.thumbnail((TAMANHO_RESIZE, TAMANHO_RESIZE), Image.ANTIALIAS)
-        image = image.resize( (TAMANHO_RESIZE, TAMANHO_RESIZE) )
+        image = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
         array = np.array(image)
-        array = np.hstack(array)
-
-        # .reshape([batch_size, TAMANHO_RESIZE, TAMANHO_RESIZE, 1])
+        array = array.flatten()
+        #array = np.hstack(array)
+        
 
         image_list.append(array)
 
-        if (len(image_list) == 10):
-            break
+        #if len(image_list) == 16:
+        #    break
 
-    return image_list
+        #image_list.append(image)
 
-def floorplan_next_batch(list_images, batch_size):
+    print("Imagens lidas")
+    return np.array(image_list)
+
+def floorplan_next_batch(batch_size, list_images):
 
     global next_batch_index
 
@@ -57,17 +62,17 @@ def floorplan_next_batch(list_images, batch_size):
     return np.array(batch_images)
         
 
-def generator(z, batch_size, z_dim):
+def generator(z_placeholder, batch_size, z_dim):
 
-    TAMANHO_IMAGEM = TAMANHO_RESIZE * 2
+    TAMANHO_IMAGEM = (RESIZE_WIDTH * 2) * (RESIZE_HEIGHT * 2) * 1
 
     # Camada 1
 
-    g_w1 = tf.get_variable('g_w1', [z_dim, TAMANHO_IMAGEM * TAMANHO_IMAGEM], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    g_b1 = tf.get_variable('g_b1', [TAMANHO_IMAGEM * TAMANHO_IMAGEM], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+    g_w1 = tf.get_variable('g_w1', [z_dim, TAMANHO_IMAGEM], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+    g_b1 = tf.get_variable('g_b1', [TAMANHO_IMAGEM], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
 
-    g1 = tf.matmul(z, g_w1) + g_b1
-    g1 = tf.reshape(g1, [-1, TAMANHO_IMAGEM, TAMANHO_IMAGEM, 1])
+    g1 = tf.matmul(z_placeholder, g_w1) + g_b1
+    g1 = tf.reshape(g1, [-1, RESIZE_HEIGHT * 2, RESIZE_WIDTH * 2, 1])
     g1 = tf.contrib.layers.batch_norm(g1, epsilon=1e-5, scope='bn1')
     g1 = tf.nn.relu(g1)
 
@@ -79,7 +84,7 @@ def generator(z, batch_size, z_dim):
     g2 = tf.nn.conv2d(g1, g_w2, strides=[1, 2, 2, 1], padding='SAME') + g_b2
     g2 = tf.contrib.layers.batch_norm(g2, epsilon=1e-5, scope='bn2')
     g2 = tf.nn.relu(g2)
-    g2 = tf.image.resize_images(g2, [TAMANHO_IMAGEM, TAMANHO_IMAGEM])
+    g2 = tf.image.resize_images(g2, [RESIZE_HEIGHT * 2, RESIZE_WIDTH * 2])
 
     # Camada 3 
 
@@ -89,7 +94,7 @@ def generator(z, batch_size, z_dim):
     g3 = tf.nn.conv2d(g2, g_w3, strides=[1, 2, 2, 1], padding='SAME') + g_b3
     g3 = tf.contrib.layers.batch_norm(g3, epsilon=1e-5, scope='bn3')
     g3 = tf.nn.relu(g3)
-    g3 = tf.image.resize_images(g3, [TAMANHO_IMAGEM, TAMANHO_IMAGEM])
+    g3 = tf.image.resize_images(g3, [RESIZE_HEIGHT * 2, RESIZE_WIDTH * 2])
 
     # Camada 4
 
@@ -104,7 +109,6 @@ def generator(z, batch_size, z_dim):
 
 def discriminator(images, reuse=None):
 
-    TAMANHO_IMAGEM = 512
     KERNEL = 32
 
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse) as scope:
@@ -118,7 +122,6 @@ def discriminator(images, reuse=None):
         d1 = tf.nn.relu(d1)
         d1 = tf.nn.max_pool(d1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        TAMANHO_IMAGEM = TAMANHO_IMAGEM / 2
         KERNEL = KERNEL * 2
 
         # Camada 2 - Segunda camada convolucional
@@ -130,14 +133,12 @@ def discriminator(images, reuse=None):
         d2 = tf.nn.relu(d2)
         d2 = tf.nn.max_pool(d2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        TAMANHO_IMAGEM = TAMANHO_IMAGEM / 2
-
         # Camada 3 - Primeira camada fully connected
 
-        entrada_fc = int(TAMANHO_IMAGEM * TAMANHO_IMAGEM * KERNEL)
+        entrada_fc = int((RESIZE_WIDTH / 4) * (RESIZE_HEIGHT / 4) * KERNEL)
 
-        d_w3 = tf.get_variable('d_w3', [entrada_fc, 1024], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-        d_b3 = tf.get_variable('d_b3', [1024], initializer=tf.constant_initializer(0))
+        d_w3 = tf.get_variable('d_w3', [entrada_fc, 512], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        d_b3 = tf.get_variable('d_b3', [512], initializer=tf.constant_initializer(0))
 
         d3 = tf.reshape(d2, [-1, entrada_fc])
         d3 = tf.matmul(d3, d_w3) + d_b3
@@ -145,31 +146,39 @@ def discriminator(images, reuse=None):
 
         # Camada 4 - Segunda camada fully connected - Readout
 
-        d_w4 = tf.get_variable('d_w4', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        d_w4 = tf.get_variable('d_w4', [512, 1], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
         d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
 
         d4 = tf.matmul(d3, d_w4) + d_b4
 
         return d4
 
+next_batch_index = 0
+RESIZE_WIDTH = 64
+RESIZE_HEIGHT = 128
+
 desvio_padrao = 0.02
 TAXA_TREINAMENTO = 10**(-4) # 0.0001
 LOGDIR = '/tensorboard/floorplan_gan_' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '/'
-IMAGES_PATH = 'input/real/'
+IMAGES_PATH = 'input/resized/'
 
 print("Logdir: " + LOGDIR)
 
 image_list = get_all_images(IMAGES_PATH)
 
 # Definindo batch de ruído aleatório
-z_dimensions = 100
-batch_size = 64
+z_dimensions = 128
+batch_size = 16
+
+print("Criação de placeholders")
 
 # Placeholder para ruído
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 
 # Placeholder para imagens enviadas ao discriminador
-x_placeholder = tf.placeholder(tf.float32, shape=[None, TAMANHO_RESIZE, TAMANHO_RESIZE, 1], name='x_placeholder')
+x_placeholder = tf.placeholder(tf.float32, shape=[None, RESIZE_HEIGHT, RESIZE_WIDTH, 1], name='x_placeholder')
+
+print("Criação das redes")
 
 # Gerador de ruídos
 Gz = generator(z_placeholder, batch_size, z_dimensions)
@@ -180,6 +189,8 @@ Dx = discriminator(x_placeholder)
 # Discriminador com imagens falsas
 Dg = discriminator(Gz, reuse = True)
 
+print("Criação das funções de custo")
+
 # Loss de imagens reais
 d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = Dx, labels = tf.ones_like(Dx)))
 
@@ -188,6 +199,8 @@ d_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = Dg
 
 # Loss para o gerador, que quer que suas imagens se passem por reais
 g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = Dg, labels = tf.ones_like(Dg)))
+
+print("Separação de variáveis por nome")
 
 # Separando variáveis entre discriminador e gerador
 tvars = tf.trainable_variables()
@@ -198,6 +211,8 @@ g_vars = [var for var in tvars if 'g_' in var.name]
 #print(d_vars)
 #print(g_vars)
 
+print("Criação de optimizadores")
+
 # Optimizador para o treino de discriminação de imagens falsas
 d_trainer_fake = tf.train.AdamOptimizer(TAXA_TREINAMENTO).minimize(d_loss_fake, var_list=d_vars)
 
@@ -207,27 +222,38 @@ d_trainer_real = tf.train.AdamOptimizer(TAXA_TREINAMENTO).minimize(d_loss_real, 
 # Optimizador para o treino de geração de imagens
 g_trainer = tf.train.AdamOptimizer(TAXA_TREINAMENTO).minimize(g_loss, var_list=g_vars)
 
+print("Início da sessão")
+
 tf.get_variable_scope().reuse_variables()
 
 with tf.Session() as sess:
+
+    print("Criação de valores escalares")
 
     tf.summary.scalar('Generator_loss', g_loss)
     tf.summary.scalar('Discriminator_loss_fake', d_loss_fake)
     tf.summary.scalar('Discriminator_loss_real', d_loss_real)
 
+    print("Criação de rede geradora e escalar para imagem falsa")
+
     images_for_tensorboard = generator(z_placeholder, batch_size, z_dimensions)
-    tf.summary.image('Generated_images', images_for_tensorboard, 5)
+    #real_image_batch = floorplan_next_batch(image_list, batch_size)
+
+    tf.summary.image('Generated_images', images_for_tensorboard, 4)
+    #tf.summary.image('Real_images', real_image_batch, batch_size)
 
     merged = tf.summary.merge_all()
     writer = tf.summary.FileWriter(LOGDIR, sess.graph)
 
     sess.run(tf.global_variables_initializer())
 
+    print("Início do pré-treino")
+
     # Pré-treino do discriminador
     for i in range(300):
 
         z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
-        real_image_batch =  floorplan_next_batch(image_list, batch_size).reshape([batch_size, TAMANHO_RESIZE, TAMANHO_RESIZE, 1])
+        real_image_batch = floorplan_next_batch(batch_size, image_list).reshape([batch_size, RESIZE_HEIGHT, RESIZE_WIDTH, 1])
         _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_image_batch, z_placeholder: z_batch})
 
         if (i % 100 == 0):
@@ -235,9 +261,11 @@ with tf.Session() as sess:
 
     # Treino do gerador e do discriminador
 
+    print("Fim do pré-treino e início do treino real")
+
     for i in range(10**6):
         #print("Época #" + str(i))
-        real_image_batch = floorplan_next_batch(image_list, batch_size).reshape([batch_size, TAMANHO_RESIZE, TAMANHO_RESIZE, 1])
+        real_image_batch = floorplan_next_batch(batch_size, image_list).reshape([batch_size, RESIZE_HEIGHT, RESIZE_WIDTH, 1])
         z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
 
         # Treino do discriminador com imagens reais e falsas
@@ -253,19 +281,13 @@ with tf.Session() as sess:
             summary = sess.run(merged, {z_placeholder: z_batch, x_placeholder: real_image_batch})
             writer.add_summary(summary, i)
 
-'''
-        if i % 100 == 0:
-            # Every 100 iterations, show a generated image
-            print("Iteration:", i, "at", datetime.datetime.now())
-            z_batch = np.random.normal(0, 1, size=[1, z_dimensions])
-            generated_images = generator(z_placeholder, 1, z_dimensions)
-            images = sess.run(generated_images, {z_placeholder: z_batch})
-            plt.imshow(images[0].reshape([28, 28]), cmap='Greys')
-            plt.show()
-            
-            # Show discriminator's estimate
-            im = images[0].reshape([1, 28, 28, 1])
-            result = discriminator(x_placeholder)
-            estimate = sess.run(result, {x_placeholder: im})
-            print("Estimate:", estimate)
-'''
+
+
+print("Fim da execução")
+
+print("\n\n\n")
+
+fim = datetime.datetime.now()
+print("Fim: " + str(fim) + '\n')
+
+print("Duração: " + str(fim - inicio))
