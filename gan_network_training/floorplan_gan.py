@@ -30,7 +30,7 @@ def get_all_images(images_path):
         image = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
         array = np.array(image)
         array = array.flatten()
-        #array = np.hstack(array)
+        array = array/255
         
 
         image_list.append(array)
@@ -64,101 +64,121 @@ def floorplan_next_batch(batch_size, list_images):
 
 def generator(z_placeholder, batch_size, z_dim):
 
-    TAMANHO_IMAGEM = (RESIZE_WIDTH * 2) * (RESIZE_HEIGHT * 2) * 1
+    GEN_WIDHT = int(WIDTH/16)
+    GEN_HEIGHT = int(HEIGHT/16)
+    CH1, CH2, CH3, CH4, = 512, 256, 128, 64 #number of kernels/filters
 
-    # Camada 1
+    with tf.variable_scope('gen') as scope:
 
-    g_w1 = tf.get_variable('g_w1', [z_dim, TAMANHO_IMAGEM], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    g_b1 = tf.get_variable('g_b1', [TAMANHO_IMAGEM], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        # Camada 1 - Saída: 4 * 8 * 256
 
-    g1 = tf.matmul(z_placeholder, g_w1) + g_b1
-    g1 = tf.reshape(g1, [-1, RESIZE_HEIGHT * 2, RESIZE_WIDTH * 2, 1])
-    g1 = tf.contrib.layers.batch_norm(g1, epsilon=1e-5, scope='bn1')
-    g1 = tf.nn.relu(g1)
+        g_w1 = tf.get_variable('g_w1', [z_dim, GEN_WIDHT * GEN_HEIGHT * CH1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO))
+        g_b1 = tf.get_variable('g_b1', [GEN_WIDHT * GEN_HEIGHT * CH1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0))
 
-    # Camada 2
+        g1 = tf.add(tf.matmul(z_placeholder, g_w1), g_b1, name='flat_conv1')
 
-    g_w2 = tf.get_variable('g_w2', [3, 3, 1, z_dim/2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    g_b2 = tf.get_variable('g_b2', [z_dim/2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        g1 = tf.reshape(g1, [-1, GEN_HEIGHT, GEN_WIDHT, CH1], name='reshape_1')
+        g1 = tf.contrib.layers.batch_norm(g1, epsilon=1e-5, decay=0.9, scope='bn1')
+        g1 = tf.nn.relu(g1, name='act_1')
 
-    g2 = tf.nn.conv2d(g1, g_w2, strides=[1, 2, 2, 1], padding='SAME') + g_b2
-    g2 = tf.contrib.layers.batch_norm(g2, epsilon=1e-5, scope='bn2')
-    g2 = tf.nn.relu(g2)
-    g2 = tf.image.resize_images(g2, [RESIZE_HEIGHT * 2, RESIZE_WIDTH * 2])
+        # Camada 2 - Saída: 8 * 16 * 128
 
-    # Camada 3 
+        g2 = tf.layers.conv2d_transpose(g1, CH2, kernel_size=[5, 5], strides=[2, 2], padding='SAME',
+                                        kernel_initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO), name='transpose_2')
+        g2 = tf.contrib.layers.batch_norm(g2, epsilon=1e-5, decay=0.9, scope='bn2')
+        g2 = tf.nn.relu(g2, name='act_2')
 
-    g_w3 = tf.get_variable('g_w3', [3, 3, z_dim/2, z_dim/4], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    g_b3 = tf.get_variable('g_b3', [z_dim/4], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        # Camada 3 - Saída: 16 * 32 * 64
 
-    g3 = tf.nn.conv2d(g2, g_w3, strides=[1, 2, 2, 1], padding='SAME') + g_b3
-    g3 = tf.contrib.layers.batch_norm(g3, epsilon=1e-5, scope='bn3')
-    g3 = tf.nn.relu(g3)
-    g3 = tf.image.resize_images(g3, [RESIZE_HEIGHT * 2, RESIZE_WIDTH * 2])
+        g3 = tf.layers.conv2d_transpose(g2, CH3, kernel_size=[5, 5], strides=[2, 2], padding='SAME',
+                                        kernel_initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO), name='transpose_3')
+        g3 = tf.contrib.layers.batch_norm(g3, epsilon=1e-5, decay=0.9, scope='bn3')
+        g3 = tf.nn.relu(g3, name='act_3')
 
-    # Camada 4
+        # Camada 3 - Saída: 32 * 64 * 32
 
-    g_w4 = tf.get_variable('g_w4', [1, 1, z_dim/4, 1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-    g_b4 = tf.get_variable('g_b4', [1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
+        g4 = tf.layers.conv2d_transpose(g3, CH4, kernel_size=[5, 5], strides=[2, 2], padding='SAME',
+                                        kernel_initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO), name='transpose_4')
+        g4 = tf.contrib.layers.batch_norm(g4, epsilon=1e-5, decay=0.9, scope='bn4')
+        g4 = tf.nn.relu(g4, name='act_4')
 
-    g4 = tf.nn.conv2d(g3, g_w4, strides=[1, 2, 2, 1], padding='SAME') + g_b4
-    g4 = tf.sigmoid(g4)
+        # Camada 4 - Saída: 64 * 128 * 1
 
-    return g4
+        g5 = tf.layers.conv2d_transpose(g4, CHANNEL, kernel_size=[5, 5], strides=[2, 2], padding='SAME',
+                                        kernel_initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO), name='transpose_5')
+        # g5 = tf.contrib.layers.batch_norm(g5, epsilon=1e-5, decay=0.9, scope='bn6')
+        g5 = tf.nn.tanh(g5, name='act_5')
+
+        return g5
 
 
 def discriminator(images, reuse=None):
 
-    KERNEL = 32
+    CH1, CH2, CH3, CH4 = 64, 128, 256, 512
 
-    with tf.variable_scope(tf.get_variable_scope(), reuse=reuse) as scope:
+    with tf.variable_scope('dis') as scope:
 
-        # Camada 1 - Primeira camada convolucional
-        # Retorna 32 filtros de tamanho 5 x 5
-        d_w1 = tf.get_variable('d_w1', [5, 5, 1, KERNEL], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-        d_b1 = tf.get_variable('d_b1', [KERNEL], initializer=tf.constant_initializer(0))
+        if reuse:
+            scope.reuse_variables()
 
-        d1 = tf.nn.conv2d(input=images, filter=d_w1, strides=[1, 1, 1, 1], padding='SAME') + d_b1
-        d1 = tf.nn.relu(d1)
-        d1 = tf.nn.max_pool(d1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        # Camada 1 - Saída: 64 * 128 * 64
 
-        KERNEL = KERNEL * 2
+        d1 = tf.layers.conv2d(images, CH1, kernel_size=[5, 5], strides=[2, 2], padding='SAME',
+                                kernel_initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO), name='conv1')
+        d1 = tf.contrib.layers.batch_norm(d1, epsilon=1e-5, decay=0.9, scope='bn1')
+        d1 = tf.nn.relu(d1, name='act_1')
 
-        # Camada 2 - Segunda camada convolucional
-        # Retorna 64 filtros de tamanho 5 x 5
-        d_w2 = tf.get_variable('d_w2', [5, 5, KERNEL/2, KERNEL], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-        d_b2 = tf.get_variable('d_b2', [KERNEL], initializer=tf.constant_initializer(0))
+        # Camada 2 - Saída: 64 * 128 * 128
 
-        d2 = tf.nn.conv2d(input=d1, filter=d_w2, strides=[1, 1, 1, 1], padding='SAME') + d_b2
-        d2 = tf.nn.relu(d2)
-        d2 = tf.nn.max_pool(d2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        d2 = tf.layers.conv2d(d1, CH2, kernel_size=[5, 5], strides=[2, 2], padding='SAME',
+                                kernel_initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO), name='conv2')
+        d2 = tf.contrib.layers.batch_norm(d2, epsilon=1e-5, decay=0.9, scope='bn2')
+        d2 = tf.nn.relu(d2, name='act_2')
 
-        # Camada 3 - Primeira camada fully connected
+        # Camada 3 - Saída: 64 * 128 * 256
 
-        entrada_fc = int((RESIZE_WIDTH / 4) * (RESIZE_HEIGHT / 4) * KERNEL)
+        d3 = tf.layers.conv2d(d2, CH3, kernel_size=[5, 5], strides=[2, 2], padding='SAME',
+                                kernel_initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO), name='conv3')
+        d3 = tf.contrib.layers.batch_norm(d3, epsilon=1e-5, decay=0.9, scope='bn3')
+        d3 = tf.nn.relu(d3, name='act_3')
 
-        d_w3 = tf.get_variable('d_w3', [entrada_fc, 512], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-        d_b3 = tf.get_variable('d_b3', [512], initializer=tf.constant_initializer(0))
+        # Camada 4 - Saída: 64 * 128 * 512
 
-        d3 = tf.reshape(d2, [-1, entrada_fc])
-        d3 = tf.matmul(d3, d_w3) + d_b3
-        d3 = tf.nn.relu(d3)
+        d4 = tf.layers.conv2d(d3, CH4, kernel_size=[5, 5], strides=[2, 2], padding='SAME',
+                                kernel_initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO), name='conv4')
+        d4 = tf.contrib.layers.batch_norm(d4, epsilon=1e-5, decay=0.9, scope='bn4')
+        d4 = tf.nn.relu(d4, name='act_4')
 
-        # Camada 4 - Segunda camada fully connected - Readout
+        #layer_shape = int(np.prod(d4.get_shape()[1:]))
+        layer_shape = int(np.prod(d4.get_shape()[1:]))
 
-        d_w4 = tf.get_variable('d_w4', [512, 1], initializer=tf.truncated_normal_initializer(stddev=desvio_padrao))
-        d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
+        # First fully connected layer
+        d_w5 = tf.get_variable('d_w5', [layer_shape, 1], initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO))
+        d_b5 = tf.get_variable('d_b5', [1], initializer=tf.constant_initializer(0))
+        d5 = tf.reshape(d4, [-1, layer_shape])
+        d5 = tf.add(tf.matmul(d5, d_w5), d_b5, name='flat_conv1')
+        # wgan just get rid of the sigmoid
+        #g5 = tf.add(tf.matmul(d5, d_w5), d_b5, name='logits')
+        # dcgan
+        acted_out = tf.nn.sigmoid(d5)
+        return d5 #, acted_out
+        #d5 = tf.nn.relu(d5, name='act_4')
 
-        d4 = tf.matmul(d3, d_w4) + d_b4
+        # Second fully connected layer
+        #d_w5 = tf.get_variable('d_w5', [512, 1], initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO))
+        #d_b5 = tf.get_variable('d_b5', [1], initializer=tf.constant_initializer(0))
+        #d5 = tf.add(tf.matmul(d4, d_w5), d_b5, name='flat_conv2')
 
-        return d4
+        # d4 contains unscaled values
+        #return d5
+
 
 next_batch_index = 0
-RESIZE_WIDTH = 64
-RESIZE_HEIGHT = 128
 
-desvio_padrao = 0.02
+WIDTH, HEIGHT, CHANNEL = 64, 128, 1
+DESVIO_PADRAO = 0.02
 TAXA_TREINAMENTO = 10**(-4) # 0.0001
+
 LOGDIR = '/tensorboard/floorplan_gan_' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '/'
 IMAGES_PATH = 'input/resized/'
 
@@ -167,8 +187,8 @@ print("Logdir: " + LOGDIR)
 image_list = get_all_images(IMAGES_PATH)
 
 # Definindo batch de ruído aleatório
-z_dimensions = 128
-batch_size = 16
+z_dimensions = 100
+batch_size = 64
 
 print("Criação de placeholders")
 
@@ -176,7 +196,7 @@ print("Criação de placeholders")
 z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions], name='z_placeholder')
 
 # Placeholder para imagens enviadas ao discriminador
-x_placeholder = tf.placeholder(tf.float32, shape=[None, RESIZE_HEIGHT, RESIZE_WIDTH, 1], name='x_placeholder')
+x_placeholder = tf.placeholder(tf.float32, shape=[None, HEIGHT, WIDTH, 1], name='x_placeholder')
 
 print("Criação das redes")
 
@@ -203,10 +223,10 @@ g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits = Dg, lab
 print("Separação de variáveis por nome")
 
 # Separando variáveis entre discriminador e gerador
-tvars = tf.trainable_variables()
+t_vars = tf.trainable_variables()
 
-d_vars = [var for var in tvars if 'd_' in var.name]
-g_vars = [var for var in tvars if 'g_' in var.name]
+d_vars = [var for var in t_vars if 'dis' in var.name]
+g_vars = [var for var in t_vars if 'gen' in var.name]
 
 #print(d_vars)
 #print(g_vars)
@@ -253,7 +273,7 @@ with tf.Session() as sess:
     for i in range(300):
 
         z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
-        real_image_batch = floorplan_next_batch(batch_size, image_list).reshape([batch_size, RESIZE_HEIGHT, RESIZE_WIDTH, 1])
+        real_image_batch = floorplan_next_batch(batch_size, image_list).reshape([batch_size, HEIGHT, WIDTH, 1])
         _, __, dLossReal, dLossFake = sess.run([d_trainer_real, d_trainer_fake, d_loss_real, d_loss_fake], {x_placeholder: real_image_batch, z_placeholder: z_batch})
 
         if (i % 100 == 0):
@@ -265,7 +285,7 @@ with tf.Session() as sess:
 
     for i in range(10**6):
         #print("Época #" + str(i))
-        real_image_batch = floorplan_next_batch(batch_size, image_list).reshape([batch_size, RESIZE_HEIGHT, RESIZE_WIDTH, 1])
+        real_image_batch = floorplan_next_batch(batch_size, image_list).reshape([batch_size, HEIGHT, WIDTH, 1])
         z_batch = np.random.normal(0, 1, [batch_size, z_dimensions])
 
         # Treino do discriminador com imagens reais e falsas
