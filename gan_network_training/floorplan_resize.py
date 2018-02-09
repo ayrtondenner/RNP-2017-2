@@ -4,9 +4,9 @@ inicio = datetime.datetime.now()
 print("Início: " + str(inicio))
 
 import glob
-import cv2
-#import matplotlib.pyplot as plt
-#from PIL import Image
+import cv2 as cv
+import numpy as np
+import matplotlib.pyplot as plt
 
 next_batch_index = 0
 RESIZE_WIDTH = 64
@@ -15,19 +15,29 @@ REAL_IMAGE_PATH = 'input/real/'
 RESIZED_IMAGE_PATH = 'input/resized/'
 
 image_list = []
+kernel = np.ones((5,5), np.uint8)
 
 print("Lendo imagens...")
 
 for filename in glob.glob(REAL_IMAGE_PATH + '*.*'):
 
-    image = cv2.imread(filename, cv2.IMREAD_COLOR)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    image = cv2.resize(image, (RESIZE_WIDTH, RESIZE_HEIGHT))
-    cv2.imwrite(RESIZED_IMAGE_PATH + filename.split('\\')[1], image)
+    image = cv.imread(filename, cv.IMREAD_COLOR)
 
-    #image = Image.open(filename)
-    #image = image.resize( (RESIZE_WIDTH, RESIZE_HEIGHT) )
-    #image.save(RESIZED_IMAGE_PATH + filename.split('\\')[1])
+    # RGB 2 GRAY
+    image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+
+    # CLOSING
+    #image = cv.morphologyEx(image, cv.MORPH_CLOSE, kernel)
+
+    # EROSION
+    image = cv.erode(image, kernel, iterations=1)
+
+    # RESIZE
+    image = cv.resize(image, (RESIZE_WIDTH, RESIZE_HEIGHT))
+
+    cv.imwrite(RESIZED_IMAGE_PATH + filename.split('\\')[1], image)
+
+    x = 0
 
 print("Imagens lidas")
 print("\n\n\n")
