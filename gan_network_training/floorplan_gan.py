@@ -153,15 +153,21 @@ def discriminator(images, reuse=None):
         layer_shape = int(np.prod(d4.get_shape()[1:]))
 
         # First fully connected layer
-        d_w5 = tf.get_variable('d_w5', [layer_shape, 1], initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO))
-        d_b5 = tf.get_variable('d_b5', [1], initializer=tf.constant_initializer(0))
+        d_w5 = tf.get_variable('d_w5', [layer_shape, 512], initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO))
+        d_b5 = tf.get_variable('d_b5', [512], initializer=tf.constant_initializer(0))
         d5 = tf.reshape(d4, [-1, layer_shape])
         d5 = tf.add(tf.matmul(d5, d_w5), d_b5, name='flat_conv1')
+        d5 = tf.nn.relu(d5, name='d5_relu')
+
+        # Second fully connected layer
+        d_w6 = tf.get_variable('d_w6', [512, 1], initializer=tf.truncated_normal_initializer(stddev=DESVIO_PADRAO))
+        d_b6 = tf.get_variable('d_b6', [1], initializer=tf.constant_initializer(0))
+        d6 = tf.add(tf.matmul(d5, d_w6), d_b6, name='flat_conv2')
         # wgan just get rid of the sigmoid
         #g5 = tf.add(tf.matmul(d5, d_w5), d_b5, name='logits')
         # dcgan
-        acted_out = tf.nn.sigmoid(d5)
-        return d5 #, acted_out
+        #acted_out = tf.nn.sigmoid(d5)
+        return d6 #, acted_out
         #d5 = tf.nn.relu(d5, name='act_4')
 
         # Second fully connected layer
@@ -234,13 +240,13 @@ g_vars = [var for var in t_vars if 'gen' in var.name]
 print("Criação de optimizadores")
 
 # Optimizador para o treino de discriminação de imagens falsas
-d_trainer_fake = tf.train.AdamOptimizer(TAXA_TREINAMENTO).minimize(d_loss_fake, var_list=d_vars)
+d_trainer_fake = tf.train.RMSPropOptimizer(TAXA_TREINAMENTO).minimize(d_loss_fake, var_list=d_vars)
 
 # Optimizador para o treino de discriminação de imagens reais
-d_trainer_real = tf.train.AdamOptimizer(TAXA_TREINAMENTO).minimize(d_loss_real, var_list=d_vars)
+d_trainer_real = tf.train.RMSPropOptimizer(TAXA_TREINAMENTO).minimize(d_loss_real, var_list=d_vars)
 
 # Optimizador para o treino de geração de imagens
-g_trainer = tf.train.AdamOptimizer(TAXA_TREINAMENTO).minimize(g_loss, var_list=g_vars)
+g_trainer = tf.train.RMSPropOptimizer(TAXA_TREINAMENTO).minimize(g_loss, var_list=g_vars)
 
 print("Início da sessão")
 
